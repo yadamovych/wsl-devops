@@ -20,6 +20,10 @@ $checks = @(
     'aws --version'
     'tofu version'
     'kubectl version --client 2>/dev/null || true'
+    'helm version --short 2>/dev/null || true'
+    'asdf version'
+    'glab --version'
+    'zsh --version'
     'git --version'
     'jq --version'
 )
@@ -33,4 +37,4 @@ Write-Host ''
 Write-Host 'Manual checks after AWS SSO + Docker Desktop setup:' -ForegroundColor Yellow
 Write-Host '  aws sts get-caller-identity'
 Write-Host '  docker run --rm hello-world'
-Write-Host '  cat ~/.ssh/id_ed25519.pub  # add to GitHub'
+Write-Host '  cat ~/.ssh/id_ed25519.pub  # add to GitHub/GitLab'

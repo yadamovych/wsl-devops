@@ -4,6 +4,7 @@ $ErrorActionPreference = 'Stop'
 
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 . (Join-Path $RepoRoot 'config\kit.config.ps1')
+. (Join-Path $RepoRoot 'config\tool-versions.ps1')
 
 $SecretsPath = Join-Path $RepoRoot 'config\secrets.local.ps1'
 if (-not (Test-Path $SecretsPath)) {
@@ -19,16 +20,22 @@ $RenderDir = Join-Path $RepoRoot '.cloud-init-rendered'
 New-Item -ItemType Directory -Force -Path $RenderDir | Out-Null
 
 $Replacements = @{
-    '{{TIMEZONE}}'        = $Timezone
-    '{{LOCALE}}'          = $Locale
-    '{{LINUX_USERNAME}}'  = $LinuxUsername
-    '{{LINUX_PASSWORD}}'  = $LinuxPassword
-    '{{GIT_USER_NAME}}'   = $GitUserName
-    '{{GIT_USER_EMAIL}}'  = $GitUserEmail
-    '{{SSH_KEY_COMMENT}}' = $SshKeyComment
-    '{{WSL_MEMORY}}'      = $WslMemory
-    '{{WSL_PROCESSORS}}'  = [string]$WslProcessors
-    '{{WSL_SWAP}}'        = $WslSwap
+    # --- identity / locale (from kit.config.ps1 + secrets.local.ps1) ---
+    '{{TIMEZONE}}'          = $Timezone
+    '{{LOCALE}}'            = $Locale
+    '{{LINUX_USERNAME}}'    = $LinuxUsername
+    '{{LINUX_PASSWORD}}'    = $LinuxPassword
+    '{{GIT_USER_NAME}}'     = $GitUserName
+    '{{GIT_USER_EMAIL}}'    = $GitUserEmail
+    '{{SSH_KEY_COMMENT}}'   = $SshKeyComment
+    # --- WSL VM settings (from kit.config.ps1) ---
+    '{{WSL_MEMORY}}'        = $WslMemory
+    '{{WSL_PROCESSORS}}'    = [string]$WslProcessors
+    '{{WSL_SWAP}}'          = $WslSwap
+    # --- tool versions (from tool-versions.ps1) ---
+    '{{ASDF_VERSION}}'      = $AsdfVersion
+    '{{GLAB_VERSION}}'      = $GlabVersion
+    '{{KUBECTL_CHANNEL}}'   = $KubectlChannel
 }
 
 function Expand-Template {

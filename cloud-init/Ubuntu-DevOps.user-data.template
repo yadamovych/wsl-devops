@@ -42,9 +42,10 @@ write_files:
     content: |
       #!/bin/bash
       set -euo pipefail
-      USER={{LINUX_USERNAME}}
+      U={{LINUX_USERNAME}}
       export DEBIAN_FRONTEND=noninteractive
 
+      # ── base packages ────────────────────────────────────────────────────────
       apt-get update
       apt-get full-upgrade -y
       apt-get install -y \
@@ -54,37 +55,68 @@ write_files:
         python3 python3-venv python3-pip pipx \
         direnv pass age \
         net-tools dnsutils iputils-ping openssh-client \
-        unattended-upgrades vim
+        unattended-upgrades vim zsh
 
-      sudo -u "$USER" pipx ensurepath || true
-      sudo -u "$USER" mkdir -p "/home/$USER/projects" "/home/$USER/bin" \
-        "/home/$USER/.config/aws" "/home/$USER/.config/opentofu" \
-        "/home/$USER/.cache/tofu/plugins" "/home/$USER/.ssh"
-      chmod 700 "/home/$USER/.ssh"
+      sudo -u "$U" pipx ensurepath || true
+      sudo -u "$U" mkdir -p "/home/$U/projects" "/home/$U/bin" \
+        "/home/$U/.config/aws" "/home/$U/.config/opentofu" \
+        "/home/$U/.cache/tofu/plugins" "/home/$U/.ssh"
+      chmod 700 "/home/$U/.ssh"
 
+      # ── AWS CLI v2 ───────────────────────────────────────────────────────────
       curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
       unzip -q /tmp/awscliv2.zip -d /tmp
       /tmp/aws/install --update
       rm -rf /tmp/aws /tmp/awscliv2.zip
 
+      # ── OpenTofu ─────────────────────────────────────────────────────────────
       install -m 0755 -d /etc/apt/keyrings
       curl -fsSL https://get.opentofu.org/opentofu.gpg | tee /etc/apt/keyrings/opentofu.gpg >/dev/null
       curl -fsSL https://packages.opentofu.org/opentofu/tofu/gpgkey | gpg --no-tty --batch --dearmor -o /etc/apt/keyrings/opentofu-repo.gpg
       chmod a+r /etc/apt/keyrings/opentofu.gpg /etc/apt/keyrings/opentofu-repo.gpg
       echo "deb [signed-by=/etc/apt/keyrings/opentofu.gpg,/etc/apt/keyrings/opentofu-repo.gpg] https://packages.opentofu.org/opentofu/tofu/any/ any main" > /etc/apt/sources.list.d/opentofu.list
 
-      curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-      echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /" > /etc/apt/sources.list.d/kubernetes.list
+      # ── kubectl {{KUBECTL_CHANNEL}} ──────────────────────────────────────────
+      curl -fsSL "https://pkgs.k8s.io/core:/stable:/{{KUBECTL_CHANNEL}}/deb/Release.key" | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+      echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/{{KUBECTL_CHANNEL}}/deb/ /" > /etc/apt/sources.list.d/kubernetes.list
 
       apt-get update
       apt-get install -y tofu kubectl
       curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
-      sudo -u "$USER" tee "/home/$USER/.tofurc" >/dev/null <<'TOFURC'
+      # ── asdf {{ASDF_VERSION}} ────────────────────────────────────────────────
+      # asdf v0.17+ is a single Go binary — no shell sourcing required.
+      curl -fsSL "https://github.com/asdf-vm/asdf/releases/download/v{{ASDF_VERSION}}/asdf-v{{ASDF_VERSION}}-linux-amd64.tar.gz" \
+        -o /tmp/asdf.tar.gz
+      tar -xzf /tmp/asdf.tar.gz -C /usr/local/bin asdf
+      chmod +x /usr/local/bin/asdf
+      rm /tmp/asdf.tar.gz
+
+      # ── glab {{GLAB_VERSION}} ────────────────────────────────────────────────
+      GLAB_VER="{{GLAB_VERSION}}"
+      GLAB_TAR="glab_${GLAB_VER}_Linux_x86_64.tar.gz"
+      curl -fsSL "https://gitlab.com/gitlab-org/cli/-/releases/v${GLAB_VER}/downloads/${GLAB_TAR}" \
+        -o /tmp/glab.tar.gz
+      mkdir -p /tmp/glab-extract
+      tar -xzf /tmp/glab.tar.gz -C /tmp/glab-extract
+      GLAB_BIN=$(find /tmp/glab-extract -type f -name glab | head -1)
+      mv "$GLAB_BIN" /usr/local/bin/glab
+      chmod +x /usr/local/bin/glab
+      rm -rf /tmp/glab.tar.gz /tmp/glab-extract
+
+      # ── oh-my-zsh ────────────────────────────────────────────────────────────
+      # CHSH=no / RUNZSH=no: we set the shell ourselves, skip auto-launch.
+      sudo -u "$U" env HOME="/home/$U" CHSH=no RUNZSH=no \
+        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+      usermod -s /bin/zsh "$U"
+
+      # ── OpenTofu plugin cache ────────────────────────────────────────────────
+      sudo -u "$U" tee "/home/$U/.tofurc" >/dev/null <<'TOFURC'
       plugin_cache_dir = "$HOME/.cache/tofu/plugins"
       TOFURC
 
-      sudo -u "$USER" tee -a "/home/$USER/.bashrc" >/dev/null <<'BASHRC'
+      # ── bash additions (.bashrc) ─────────────────────────────────────────────
+      sudo -u "$U" tee -a "/home/$U/.bashrc" >/dev/null <<'BASHRC'
 
       export EDITOR=vim
       export PROJECTS=~/projects
@@ -94,17 +126,31 @@ write_files:
       eval "$(direnv hook bash)"
       BASHRC
 
-      sudo -u "$USER" git config --global init.defaultBranch main
-      sudo -u "$USER" git config --global core.autocrlf input
-      sudo -u "$USER" git config --global pull.rebase false
-      sudo -u "$USER" git config --global user.name "{{GIT_USER_NAME}}"
-      sudo -u "$USER" git config --global user.email "{{GIT_USER_EMAIL}}"
-      sudo -u "$USER" git config --global credential.helper "/mnt/c/Program Files/Git/mingw64/bin/git-credential-manager.exe"
+      # ── zsh additions (.zshrc, appended after oh-my-zsh template) ───────────
+      sudo -u "$U" tee -a "/home/$U/.zshrc" >/dev/null <<'ZSHRC'
 
-      if [ ! -f "/home/$USER/.ssh/id_ed25519" ]; then
-        sudo -u "$USER" ssh-keygen -t ed25519 -C "{{SSH_KEY_COMMENT}}" -f "/home/$USER/.ssh/id_ed25519" -N ""
+      export EDITOR=vim
+      export PROJECTS=~/projects
+      cd ~/projects 2>/dev/null || true
+      alias clip='clip.exe'
+      alias explorer='explorer.exe'
+      eval "$(direnv hook zsh)"
+      ZSHRC
+
+      # ── git global config ────────────────────────────────────────────────────
+      sudo -u "$U" git config --global init.defaultBranch main
+      sudo -u "$U" git config --global core.autocrlf input
+      sudo -u "$U" git config --global pull.rebase false
+      sudo -u "$U" git config --global user.name "{{GIT_USER_NAME}}"
+      sudo -u "$U" git config --global user.email "{{GIT_USER_EMAIL}}"
+      sudo -u "$U" git config --global credential.helper "/mnt/c/Program Files/Git/mingw64/bin/git-credential-manager.exe"
+
+      # ── SSH key ──────────────────────────────────────────────────────────────
+      if [ ! -f "/home/$U/.ssh/id_ed25519" ]; then
+        sudo -u "$U" ssh-keygen -t ed25519 -C "{{SSH_KEY_COMMENT}}" -f "/home/$U/.ssh/id_ed25519" -N ""
       fi
 
+      # ── cleanup ──────────────────────────────────────────────────────────────
       apt-get autoremove -y
       dpkg-reconfigure -f noninteractive unattended-upgrades
 

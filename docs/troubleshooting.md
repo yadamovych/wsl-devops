@@ -55,3 +55,25 @@ git pull
 .\scripts\uninstall.ps1
 .\scripts\install.ps1
 ```
+
+## Upgrading a pinned tool version
+
+Edit `config/tool-versions.ps1`, bump the version, commit, push, then reprovision:
+
+```powershell
+# 1. Edit config\tool-versions.ps1 — e.g. $AsdfVersion = '0.20.0'
+# 2. Commit and push
+git add config\tool-versions.ps1
+git commit -m "chore: bump asdf to 0.20.0"
+git push
+# 3. Reprovision
+.\scripts\uninstall.ps1
+.\scripts\install.ps1
+```
+
+## Adding a new tool
+
+1. Add a `$ToolVersion` variable to `config/tool-versions.ps1`
+2. Add `'{{TOOL_VERSION}}' = $ToolVersion` to `$Replacements` in `scripts/render-templates.ps1`
+3. Add a labeled install block to `cloud-init/Ubuntu-DevOps.user-data.template` using `{{TOOL_VERSION}}`
+4. Add a version check to `scripts/verify.ps1`
