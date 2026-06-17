@@ -1,5 +1,5 @@
 # Shared settings — safe to commit. Edit to match your environment.
-$KitVersion    = "1.0.0"
+$KitVersion    = "1.1.0"
 $DistroName    = "Ubuntu-DevOps"
 $LinuxUsername = "devops"
 $Timezone      = "Europe/Kyiv"
