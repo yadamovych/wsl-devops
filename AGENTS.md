@@ -18,13 +18,17 @@ no long-running service to start. The cloud agent runs on Linux, so keep the fol
   not failures.
 
 ### Tests
-- There is no automated test suite (no Pester tests). Validate changes by rendering and
-  inspecting output.
+- Pester v5 suite in `tests/`. Run from repo root: `pwsh -NoProfile -Command "Invoke-Pester -Path ./tests -Output Detailed"`.
+- The suite validates the platform-agnostic rendering logic (`scripts/KitTemplate.psm1`) plus an
+  end-to-end render via `scripts/render-templates.ps1`, so it runs on Linux without WSL.
+- The integration test temporarily writes `config/secrets.local.ps1` (backing up/restoring any
+  existing one), so it is self-contained and does not require pre-existing secrets.
 
 ### Run (core functionality that works on Linux)
 - `scripts/render-templates.ps1` is the heart of the kit: it substitutes `{{PLACEHOLDER}}`
   values from `config/kit.config.ps1` + `config/tool-versions.ps1` + `config/secrets.local.ps1`
   into the cloud-init and `.wslconfig` templates, writing results to `.cloud-init-rendered/`.
+  The reusable substitution logic lives in `scripts/KitTemplate.psm1` (`Expand-KitTemplate`).
 - It **requires** `config/secrets.local.ps1` (gitignored). Create it from
   `config/secrets.local.ps1.example` and set `LinuxPassword` to anything other than `CHANGE_ME`
   (the script throws otherwise).

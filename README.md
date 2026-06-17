@@ -52,6 +52,18 @@ git pull
 
 [docs/troubleshooting.md](docs/troubleshooting.md)
 
+## Validate (any OS, no WSL needed)
+
+The template-rendering logic is cross-platform and covered by a Pester suite. With
+[PowerShell 7](https://github.com/PowerShell/PowerShell) + `Pester` installed:
+
+```powershell
+Invoke-Pester -Path ./tests -Output Detailed
+```
+
+This renders the cloud-init / `.wslconfig` templates and asserts placeholder substitution
+without touching WSL. `scripts/install.ps1` and friends still require Windows + WSL2.
+
 ## Golden rules
 
 1. Store code in `~/projects` — not `/mnt/c/`
