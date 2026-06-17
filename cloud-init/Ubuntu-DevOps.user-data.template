@@ -69,40 +69,42 @@ write_files:
       /tmp/aws/install --update
       rm -rf /tmp/aws /tmp/awscliv2.zip
 
-      # ── OpenTofu ─────────────────────────────────────────────────────────────
-      install -m 0755 -d /etc/apt/keyrings
+      # ── OpenTofu via APT ────────────────────────────────────────────────────
       curl -fsSL https://get.opentofu.org/opentofu.gpg | tee /etc/apt/keyrings/opentofu.gpg >/dev/null
       curl -fsSL https://packages.opentofu.org/opentofu/tofu/gpgkey | gpg --no-tty --batch --dearmor -o /etc/apt/keyrings/opentofu-repo.gpg
       chmod a+r /etc/apt/keyrings/opentofu.gpg /etc/apt/keyrings/opentofu-repo.gpg
       echo "deb [signed-by=/etc/apt/keyrings/opentofu.gpg,/etc/apt/keyrings/opentofu-repo.gpg] https://packages.opentofu.org/opentofu/tofu/any/ any main" > /etc/apt/sources.list.d/opentofu.list
-
-      # ── kubectl {{KUBECTL_CHANNEL}} ──────────────────────────────────────────
-      curl -fsSL "https://pkgs.k8s.io/core:/stable:/{{KUBECTL_CHANNEL}}/deb/Release.key" | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-      echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/{{KUBECTL_CHANNEL}}/deb/ /" > /etc/apt/sources.list.d/kubernetes.list
-
       apt-get update
-      apt-get install -y tofu kubectl
+      apt-get install -y tofu
+
+      # ── kubectl + helm ──────────────────────────────────────────────────────
+      curl -fsSL "https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key" | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+      echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /" > /etc/apt/sources.list.d/kubernetes.list
+      apt-get update
+      apt-get install -y kubectl
       curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
-      # ── asdf {{ASDF_VERSION}} ────────────────────────────────────────────────
-      # asdf v0.17+ is a single Go binary — no shell sourcing required.
-      curl -fsSL "https://github.com/asdf-vm/asdf/releases/download/v{{ASDF_VERSION}}/asdf-v{{ASDF_VERSION}}-linux-amd64.tar.gz" \
+      # ── asdf (standalone binary) ────────────────────────────────────────────
+      ASDF_VER="0.19.0"
+      curl -fsSL "https://github.com/asdf-vm/asdf/releases/download/v${ASDF_VER}/asdf-v${ASDF_VER}-linux-amd64.tar.gz" \
         -o /tmp/asdf.tar.gz
       tar -xzf /tmp/asdf.tar.gz -C /usr/local/bin asdf
       chmod +x /usr/local/bin/asdf
       rm /tmp/asdf.tar.gz
 
-      # ── glab {{GLAB_VERSION}} ────────────────────────────────────────────────
-      GLAB_VER="{{GLAB_VERSION}}"
-      GLAB_TAR="glab_${GLAB_VER}_Linux_x86_64.tar.gz"
-      curl -fsSL "https://gitlab.com/gitlab-org/cli/-/releases/v${GLAB_VER}/downloads/${GLAB_TAR}" \
-        -o /tmp/glab.tar.gz
-      mkdir -p /tmp/glab-extract
-      tar -xzf /tmp/glab.tar.gz -C /tmp/glab-extract
-      GLAB_BIN=$(find /tmp/glab-extract -type f -name glab | head -1)
-      mv "$GLAB_BIN" /usr/local/bin/glab
-      chmod +x /usr/local/bin/glab
-      rm -rf /tmp/glab.tar.gz /tmp/glab-extract
+      # ── glab (latest from GitLab) ───────────────────────────────────────────
+      # Download from GitLab releases page API (more reliable than direct URL)
+      GLAB_LATEST=$(curl -s https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/releases | \
+        grep -oP '"tag_name"\s*:\s*"v\K[^"]+' | head -1)
+      if [ -n "$GLAB_LATEST" ]; then
+        curl -fsSL "https://gitlab.com/gitlab-org/cli/-/releases/v${GLAB_LATEST}/downloads/glab_${GLAB_LATEST}_linux_amd64.tar.gz" \
+          -o /tmp/glab.tar.gz
+        tar -xzf /tmp/glab.tar.gz -C /usr/local/bin glab
+        chmod +x /usr/local/bin/glab
+        rm /tmp/glab.tar.gz
+      else
+        echo "Warning: Could not determine latest glab version"
+      fi
 
       # ── oh-my-zsh ────────────────────────────────────────────────────────────
       # CHSH=no / RUNZSH=no: we set the shell ourselves, skip auto-launch.
@@ -153,7 +155,3 @@ write_files:
       # ── cleanup ──────────────────────────────────────────────────────────────
       apt-get autoremove -y
       dpkg-reconfigure -f noninteractive unattended-upgrades
-
-runcmd:
-  - [bash, /opt/bootstrap-devops.sh]
-  - [cloud-init, status, --wait]
