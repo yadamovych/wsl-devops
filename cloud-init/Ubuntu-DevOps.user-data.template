@@ -55,7 +55,7 @@ write_files:
         python3 python3-venv python3-pip pipx \
         direnv pass age \
         net-tools dnsutils iputils-ping openssh-client \
-        unattended-upgrades vim zsh
+        unattended-upgrades vim zsh snapd
 
       sudo -u "$U" pipx ensurepath || true
       sudo -u "$U" mkdir -p "/home/$U/projects" "/home/$U/bin" \
@@ -63,48 +63,21 @@ write_files:
         "/home/$U/.cache/tofu/plugins" "/home/$U/.ssh"
       chmod 700 "/home/$U/.ssh"
 
-      # ── AWS CLI v2 ───────────────────────────────────────────────────────────
-      curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
-      unzip -q /tmp/awscliv2.zip -d /tmp
-      /tmp/aws/install --update
-      rm -rf /tmp/aws /tmp/awscliv2.zip
+      # ── Snap tools: aws, opentofu, kubectl, helm, asdf, glab ────────────────
+      snap install aws-cli --classic
+      snap install opentofu --classic
+      snap install kubectl --classic
+      snap install helm --classic
+      snap install asdf --classic
+      snap install glab --classic
 
-      # ── OpenTofu via APT ────────────────────────────────────────────────────
-      curl -fsSL https://get.opentofu.org/opentofu.gpg | tee /etc/apt/keyrings/opentofu.gpg >/dev/null
-      curl -fsSL https://packages.opentofu.org/opentofu/tofu/gpgkey | gpg --no-tty --batch --dearmor -o /etc/apt/keyrings/opentofu-repo.gpg
-      chmod a+r /etc/apt/keyrings/opentofu.gpg /etc/apt/keyrings/opentofu-repo.gpg
-      echo "deb [signed-by=/etc/apt/keyrings/opentofu.gpg,/etc/apt/keyrings/opentofu-repo.gpg] https://packages.opentofu.org/opentofu/tofu/any/ any main" > /etc/apt/sources.list.d/opentofu.list
-      apt-get update
-      apt-get install -y tofu
-
-      # ── kubectl + helm ──────────────────────────────────────────────────────
-      curl -fsSL "https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key" | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-      echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /" > /etc/apt/sources.list.d/kubernetes.list
-      apt-get update
-      apt-get install -y kubectl
-      curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-
-      # ── asdf (standalone binary) ────────────────────────────────────────────
-      ASDF_VER="0.19.0"
-      curl -fsSL "https://github.com/asdf-vm/asdf/releases/download/v${ASDF_VER}/asdf-v${ASDF_VER}-linux-amd64.tar.gz" \
-        -o /tmp/asdf.tar.gz
-      tar -xzf /tmp/asdf.tar.gz -C /usr/local/bin asdf
-      chmod +x /usr/local/bin/asdf
-      rm /tmp/asdf.tar.gz
-
-      # ── glab (latest from GitLab) ───────────────────────────────────────────
-      # Download from GitLab releases page API (more reliable than direct URL)
-      GLAB_LATEST=$(curl -s https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/releases | \
-        grep -oP '"tag_name"\s*:\s*"v\K[^"]+' | head -1)
-      if [ -n "$GLAB_LATEST" ]; then
-        curl -fsSL "https://gitlab.com/gitlab-org/cli/-/releases/v${GLAB_LATEST}/downloads/glab_${GLAB_LATEST}_linux_amd64.tar.gz" \
-          -o /tmp/glab.tar.gz
-        tar -xzf /tmp/glab.tar.gz -C /usr/local/bin glab
-        chmod +x /usr/local/bin/glab
-        rm /tmp/glab.tar.gz
-      else
-        echo "Warning: Could not determine latest glab version"
-      fi
+      # ── Update PATH to include snap binaries ───────────────────────────────
+      sudo -u "$U" tee -a "/home/$U/.bashrc" >/dev/null <<'SNAPPATH'
+      export PATH="/snap/bin:$PATH"
+      SNAPPATH
+      sudo -u "$U" tee -a "/home/$U/.zshrc" >/dev/null <<'SNAPPATH'
+      export PATH="/snap/bin:$PATH"
+      SNAPPATH
 
       # ── oh-my-zsh ────────────────────────────────────────────────────────────
       # CHSH=no / RUNZSH=no: we set the shell ourselves, skip auto-launch.
