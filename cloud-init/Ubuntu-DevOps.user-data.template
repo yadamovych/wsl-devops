@@ -5,7 +5,6 @@ locale: {{LOCALE}}
 
 users:
   - name: {{LINUX_USERNAME}}
-    uid: 1100
     gecos: DevOps User
     groups: [adm, dialout, cdrom, floppy, sudo, audio, dip, video, plugdev, netdev]
     shell: /bin/bash

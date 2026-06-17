@@ -126,9 +126,9 @@ $bootstrapExitCode = $LASTEXITCODE
 $ErrorActionPreference = 'Stop'
 
 if ($bootstrapExitCode -eq 0) {
-    Write-Host '✓ Bootstrap completed successfully' -ForegroundColor Green
+    Write-Host 'Bootstrap completed successfully' -ForegroundColor Green
 } else {
-    Write-Host "✗ Bootstrap failed with exit code $bootstrapExitCode" -ForegroundColor Red
+    Write-Host "Bootstrap failed with exit code $bootstrapExitCode" -ForegroundColor Red
     Write-Host 'Check the output above for errors. To retry:'
     Write-Host "  wsl -d $DistroName -- sudo bash /opt/bootstrap-devops.sh"
 }
