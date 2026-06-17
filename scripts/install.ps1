@@ -54,15 +54,80 @@ wsl --install --from-file $WslImagePath --name $DistroName --no-launch
 
 wsl --set-default $DistroName
 
-# First boot triggers cloud-init. Block until all stages complete, then exit.
-# Output from the bootstrap script appears inside the WSL session in real time.
-Write-Host 'First launch - cloud-init provisioning (5-15 min, please wait) ...'
-wsl -d $DistroName -- bash -c "cloud-init status --wait; echo ''; echo '=== cloud-init done ==='"
+# ── First boot: trigger cloud-init ───────────────────────────────────────────
+# On first boot the default user is root because wsl.conf is written BY
+# cloud-init, so the [user] default=devops block does not exist yet.
+# The warning "Failed to start the systemd user session for 'root'" is
+# expected and harmless: cloud-init runs as a system service, not a user
+# service, and is unaffected by the failed root user session.
+Write-Host 'First launch - triggering cloud-init ...'
+Write-Host 'Note: "Failed to start the systemd user session for root" is expected on first boot.'
+
+# ── WSL stderr emits a harmless warning on root first-boot ───────────────────
+# PowerShell $ErrorActionPreference='Stop' converts any native-command stderr
+# output into a terminating NativeCommandError, even with 2>$null.
+# Relax to 'Continue' for all WSL calls in this section, then restore.
+$savedEAP = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
+
+# Short-lived command to trigger the first boot and start cloud-init.
+wsl -d $DistroName -u root -- /bin/bash -c 'echo "WSL first boot OK"' 2>&1 | Out-Null
+
+# ── Poll for cloud-init completion ────────────────────────────────────────────
+# /var/lib/cloud/instance/boot-finished is the canonical marker that cloud-init
+# creates after every stage (init, config, final) has completed successfully.
+Write-Host 'Waiting for cloud-init provisioning (polling every 20s, up to 20 min) ...'
+$deadline = (Get-Date).AddMinutes(20)
+$done     = $false
+while (-not $done -and (Get-Date) -lt $deadline) {
+    Start-Sleep -Seconds 20
+    # 2>&1 merges stderr into stdout so no NativeCommandError is generated.
+    wsl -d $DistroName -u root -- test -f /var/lib/cloud/instance/boot-finished 2>&1 | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        $done = $true
+    } else {
+        $status = (wsl -d $DistroName -u root -- cloud-init status 2>&1 |
+                   Where-Object { $_ -notmatch 'systemd user session' }) -join ' '
+        Write-Host ('[{0}] cloud-init: {1}' -f (Get-Date -Format 'HH:mm:ss'), $(if ($status.Trim()) { $status.Trim() } else { 'starting...' }))
+        if ($status -match 'error') { break }
+    }
+}
+
+$ErrorActionPreference = $savedEAP
+
+if ($done) {
+    Write-Host ''
+    Write-Host '=== cloud-init done ===' -ForegroundColor Green
+} else {
+    Write-Warning 'cloud-init did not finish within 20 min.'
+    Write-Warning 'Check manually: wsl -d Ubuntu-DevOps -- cloud-init status'
+}
 
 Write-Host 'Applying .wslconfig - shutdown and restart ...'
 wsl --shutdown
 Start-Sleep -Seconds 8
-wsl -d $DistroName -e bash -lc "echo 'WSL restarted'"
+# Restart under the devops user (wsl.conf now has [user] default=devops).
+$ErrorActionPreference = 'Continue'
+wsl -d $DistroName -- bash -lc "echo 'WSL restarted OK'" 2>&1 | Out-Null
+$ErrorActionPreference = 'Stop'
+
+# ── Run bootstrap script ────────────────────────────────────────────────────────
+# On WSL, cloud-init's runcmd is not reliably executed. Run the bootstrap
+# script explicitly as root after restart to install all tools.
+Write-Host ''
+Write-Host 'Running bootstrap script (5-10 min) ...'
+$ErrorActionPreference = 'Continue'
+wsl -d $DistroName -u root -- bash /opt/bootstrap-devops.sh 2>&1
+$bootstrapExitCode = $LASTEXITCODE
+$ErrorActionPreference = 'Stop'
+
+if ($bootstrapExitCode -eq 0) {
+    Write-Host '✓ Bootstrap completed successfully' -ForegroundColor Green
+} else {
+    Write-Host "✗ Bootstrap failed with exit code $bootstrapExitCode" -ForegroundColor Red
+    Write-Host 'Check the output above for errors. To retry:'
+    Write-Host "  wsl -d $DistroName -u root -- bash /opt/bootstrap-devops.sh"
+}
 
 & (Join-Path $PSScriptRoot 'verify.ps1')
 
