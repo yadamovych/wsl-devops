@@ -6,11 +6,6 @@ swap={{WSL_SWAP}}
 [experimental]
 autoMemoryReclaim=gradual
 networkingMode=nat
-# dnsTunneling defaults to true on Windows 11 22H2+, so it does not need to be set here.
-# Setting it explicitly on unsupported hosts (Windows 10, or older WSL) only prints the
-# harmless warning "wsl: DNS Tunneling is not supported" and is otherwise ignored.
-# Uncomment to force it on (requires Windows 11 22H2+ and WSL 2.0.0+):
-#   dnsTunneling=true
 # sparseVhd=true is disabled in some WSL builds due to data-corruption risk;
 # enable manually once your WSL version supports it:
 #   wsl --manage Ubuntu-DevOps --set-sparse true --allow-unsafe
