@@ -30,6 +30,15 @@ Inside WSL: `systemctl is-system-running`
 
 Enable WSL integration in Docker Desktop for **Ubuntu-DevOps**. Do not install Docker Engine inside WSL when using Docker Desktop.
 
+## "wsl: DNS Tunneling is not supported"
+
+Harmless warning, safe to ignore. DNS tunneling requires Windows 11 22H2+ and WSL 2.0.0+;
+on Windows 10 or older WSL builds WSL ignores the setting and uses normal DNS (the generated
+`/etc/resolv.conf`). The kit does not set `dnsTunneling` (it defaults to `true` on supported
+Windows 11), so a fresh `.wslconfig` does not trigger the warning. If you want it on explicitly,
+add `dnsTunneling=true` under `[wsl2]` in `config/wsl.config.template`, re-deploy, then
+`wsl --shutdown`.
+
 ## Slow file operations
 
 Keep projects under `~/projects` in the Linux filesystem. Avoid `/mnt/c/` for active development.

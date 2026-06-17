@@ -16,11 +16,17 @@ Repeatable **Ubuntu 26.04 WSL** setup for daily DevOps work: **AWS CLI**, **Open
 ```powershell
 git clone https://github.com/yadamovych/wsl-devops.git
 cd wsl-devops
-copy config\secrets.local.ps1.example config\secrets.local.ps1
-# Edit config\secrets.local.ps1 — password, git name, email
 Set-ExecutionPolicy -Scope Process Bypass
+.\scripts\new-secrets.ps1   # interactive prompt that creates config\secrets.local.ps1
 .\scripts\install.ps1
 ```
+
+`install.ps1` runs `scripts\preflight.ps1` first to verify everything a fresh Windows host needs
+(Windows build, hardware virtualization, WSL/WSL2, Git for Windows, Docker Desktop, Windows
+Terminal, and the secrets file) and will offer to create `config\secrets.local.ps1` interactively
+if it is missing. Docker Desktop / Windows Terminal are reported as warnings, not blockers. You can
+still create it manually instead: `copy config\secrets.local.ps1.example config\secrets.local.ps1`
+then edit the password / git identity.
 
 Then complete [checklists/repeat-install.md](checklists/repeat-install.md) (AWS SSO, Docker WSL toggle, SSH key).
 
@@ -51,6 +57,18 @@ git pull
 ## Troubleshooting
 
 [docs/troubleshooting.md](docs/troubleshooting.md)
+
+## Validate (any OS, no WSL needed)
+
+The template-rendering logic is cross-platform and covered by a Pester suite. With
+[PowerShell 7](https://github.com/PowerShell/PowerShell) + `Pester` installed:
+
+```powershell
+Invoke-Pester -Path ./tests -Output Detailed
+```
+
+This renders the cloud-init / `.wslconfig` templates and asserts placeholder substitution
+without touching WSL. `scripts/install.ps1` and friends still require Windows + WSL2.
 
 ## Golden rules
 

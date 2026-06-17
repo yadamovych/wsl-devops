@@ -86,6 +86,10 @@ write_files:
         | tee /etc/apt/sources.list.d/docker.list >/dev/null
       apt-get update
       apt-get install -y docker-ce-cli docker-compose-plugin
+      # docker-ce-cli does not create the 'docker' group (only the daemon package does),
+      # so create it first to avoid "usermod: group 'docker' does not exist". Harmless with
+      # Docker Desktop's WSL integration; ready if a local daemon is ever installed.
+      groupadd -f docker
       usermod -aG docker "$U" || true
 
       # -- gitlabber (pipx; silent install; GITLABBER_CLONE_METHOD=http = HTTPS clones) -

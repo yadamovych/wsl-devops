@@ -5,16 +5,25 @@ $ErrorActionPreference = 'Stop'
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 . (Join-Path $RepoRoot 'config\kit.config.ps1')
 . (Join-Path $RepoRoot 'config\tool-versions.ps1')
+Import-Module (Join-Path $PSScriptRoot 'KitTemplate.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'KitSecrets.psm1') -Force
 
 $SecretsPath = Join-Path $RepoRoot 'config\secrets.local.ps1'
-if (-not (Test-Path $SecretsPath)) {
-    throw 'Missing config\secrets.local.ps1 - copy from secrets.local.ps1.example and edit.'
+$secretsStatus = Get-KitSecretsStatus -Path $SecretsPath
+if (-not $secretsStatus.IsValid) {
+    if (Test-KitInteractive) {
+        # Offer to create/repair the secrets file instead of failing outright.
+        Write-Host 'config/secrets.local.ps1 is missing or LinuxPassword is still "CHANGE_ME".' -ForegroundColor Yellow
+        Request-KitSecrets -Path $SecretsPath -Force:$secretsStatus.Exists
+    }
+    elseif (-not $secretsStatus.Exists) {
+        throw 'Missing config\secrets.local.ps1 - run scripts\new-secrets.ps1 (interactive) or copy config\secrets.local.ps1.example and edit.'
+    }
+    else {
+        throw 'config\secrets.local.ps1 LinuxPassword is missing or still "CHANGE_ME" - run scripts\new-secrets.ps1 or edit it.'
+    }
 }
 . $SecretsPath
-
-if ($LinuxPassword -eq 'CHANGE_ME') {
-    throw 'Edit config\secrets.local.ps1 - LinuxPassword is still CHANGE_ME.'
-}
 
 $RenderDir = Join-Path $RepoRoot '.cloud-init-rendered'
 New-Item -ItemType Directory -Force -Path $RenderDir | Out-Null
@@ -44,26 +53,13 @@ if ($GitlabberCloneMethod -notin @('http', 'ssh')) {
     throw 'config\kit.config.ps1: GitlabberCloneMethod must be "http" or "ssh".'
 }
 
-function Expand-Template {
-    param([string]$Path, [string]$OutPath)
-    $content = Get-Content -Raw -Path $Path
-    foreach ($key in $Replacements.Keys) {
-        $content = $content.Replace($key, $Replacements[$key])
-    }
-    if (($Path -like '*user-data*') -and (-not $content.StartsWith('#cloud-config'))) {
-        throw 'Rendered cloud-init must start with #cloud-config'
-    }
-    # utf8NoBOM requires PS 6+; use .NET directly for PS 5.1 compatibility
-    [System.IO.File]::WriteAllText($OutPath, $content, [System.Text.UTF8Encoding]::new($false))
-}
-
 $CloudInitTemplate = Join-Path $RepoRoot 'cloud-init\Ubuntu-DevOps.user-data.template'
 $CloudInitOut      = Join-Path $RenderDir ('{0}.user-data' -f $DistroName)
-Expand-Template -Path $CloudInitTemplate -OutPath $CloudInitOut
+Expand-KitTemplate -Path $CloudInitTemplate -OutPath $CloudInitOut -Replacements $Replacements
 
 $WslConfigTemplate = Join-Path $RepoRoot 'config\wsl.config.template'
 $WslConfigOut      = Join-Path $RenderDir '.wslconfig'
-Expand-Template -Path $WslConfigTemplate -OutPath $WslConfigOut
+Expand-KitTemplate -Path $WslConfigTemplate -OutPath $WslConfigOut -Replacements $Replacements
 
 Write-Host ('Rendered cloud-init : {0}' -f $CloudInitOut)
 Write-Host ('Rendered wslconfig  : {0}' -f $WslConfigOut)
