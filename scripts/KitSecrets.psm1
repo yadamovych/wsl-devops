@@ -126,47 +126,140 @@ function Request-KitSecrets {
     Write-Host ('Wrote {0}' -f $Path) -ForegroundColor Green
 }
 
+# --- Mockable probes (kept internal; tests mock these per-scenario) -----------
+
+function Test-KitCommand {
+    # Whether a command/binary is resolvable on PATH.
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param([Parameter(Mandatory)][string]$Name)
+    [bool](Get-Command -Name $Name -ErrorAction SilentlyContinue)
+}
+
+function Get-KitOsInfo {
+    # Operating-system facts (Windows caption + build number).
+    [CmdletBinding()]
+    param()
+    $isWin = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform(
+        [System.Runtime.InteropServices.OSPlatform]::Windows)
+    $caption = $null
+    $build   = $null
+    if ($isWin) {
+        try {
+            $os = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction Stop
+            $caption = $os.Caption
+            $build   = [int]$os.BuildNumber
+        } catch {
+            try { $build = [System.Environment]::OSVersion.Version.Build } catch { }
+        }
+    }
+    [pscustomobject]@{ IsWindows = $isWin; Caption = $caption; Build = $build }
+}
+
+function Test-KitVirtualizationEnabled {
+    # $true / $false / $null (unknown). WSL2 needs hardware virtualization.
+    [CmdletBinding()]
+    param()
+    $fw = $null
+    $hv = $null
+    try {
+        $cpu = Get-CimInstance -ClassName Win32_Processor -ErrorAction Stop | Select-Object -First 1
+        if ($null -ne $cpu.VirtualizationFirmwareEnabled) { $fw = [bool]$cpu.VirtualizationFirmwareEnabled }
+    } catch { }
+    try {
+        $cs = Get-CimInstance -ClassName Win32_ComputerSystem -ErrorAction Stop
+        if ($null -ne $cs.HypervisorPresent) { $hv = [bool]$cs.HypervisorPresent }
+    } catch { }
+    if ($fw -eq $true -or $hv -eq $true)  { return $true }
+    if ($fw -eq $false -or $hv -eq $false) { return $false }
+    return $null
+}
+
+function Get-KitWslInfo {
+    # WSL presence + whether the modern (Store) build with `wsl --version` is available.
+    [CmdletBinding()]
+    param()
+    $installed     = Test-KitCommand -Name 'wsl'
+    $hasVersionCmd = $false
+    if ($installed) {
+        try {
+            & wsl.exe --version *> $null 2>&1
+            $hasVersionCmd = ($LASTEXITCODE -eq 0)
+        } catch { }
+    }
+    [pscustomobject]@{ Installed = $installed; HasVersionCommand = $hasVersionCmd }
+}
+
+function Test-KitDockerReady {
+    # $true when the docker client resolves AND the daemon is reachable
+    # (i.e. Docker Desktop is running with WSL integration enabled).
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param()
+    if (-not (Test-KitCommand -Name 'docker')) { return $false }
+    try {
+        & docker info *> $null 2>&1
+        return ($LASTEXITCODE -eq 0)
+    } catch { return $false }
+}
+
+# --- Composed prerequisite report --------------------------------------------
+
 function Get-KitPrerequisite {
     [CmdletBinding()]
     param([string]$SecretsPath)
 
     $checks = New-Object System.Collections.Generic.List[object]
+    $add = {
+        param($Name, $Required, $Ok, $Detail)
+        $checks.Add([pscustomobject]@{ Name = $Name; Required = $Required; Ok = $Ok; Detail = $Detail })
+    }
 
-    $checks.Add([pscustomobject]@{
-        Name     = 'PowerShell >= 5.1'
-        Required = $true
-        Ok       = ($PSVersionTable.PSVersion -ge [version]'5.1')
-        Detail   = $PSVersionTable.PSVersion.ToString()
-    })
+    # PowerShell
+    & $add 'PowerShell >= 5.1' $true ($PSVersionTable.PSVersion -ge [version]'5.1') $PSVersionTable.PSVersion.ToString()
 
-    $wsl = Get-Command wsl -ErrorAction SilentlyContinue
-    $checks.Add([pscustomobject]@{
-        Name     = 'WSL (wsl command)'
-        Required = $true
-        Ok       = [bool]$wsl
-        Detail   = if ($wsl) { $wsl.Source } else { 'not found - install on Windows: wsl --install' }
-    })
+    # Windows OS + supported build (Win10 21H2 build 19044 / Win11)
+    $os = Get-KitOsInfo
+    & $add 'Operating system: Windows' $true $os.IsWindows ($(if ($os.IsWindows) { $os.Caption } else { 'not Windows - this kit provisions WSL on a Windows host' }))
+    $buildOk = ($os.IsWindows -and $os.Build -ge 19044)
+    $buildDetail =
+        if (-not $os.IsWindows) { 'n/a (not Windows)' }
+        elseif ($null -eq $os.Build) { 'could not determine build' }
+        elseif ($buildOk) { ('build {0}' -f $os.Build) }
+        else { ('build {0} - need Win10 21H2 (19044)+ or Win11' -f $os.Build) }
+    & $add 'Windows build >= 19044 (21H2/Win11)' $true $buildOk $buildDetail
 
-    $git = Get-Command git -ErrorAction SilentlyContinue
-    $checks.Add([pscustomobject]@{
-        Name     = 'git'
-        Required = $false
-        Ok       = [bool]$git
-        Detail   = if ($git) { $git.Source } else { 'not found (recommended: Git for Windows)' }
-    })
+    # Hardware virtualization (downgraded to a warning when it can't be determined)
+    $vt = Test-KitVirtualizationEnabled
+    if ($vt -eq $true)       { & $add 'Hardware virtualization' $true  $true  'enabled' }
+    elseif ($vt -eq $false)  { & $add 'Hardware virtualization' $true  $false 'disabled - enable VT-x/AMD-V in BIOS/UEFI' }
+    else                     { & $add 'Hardware virtualization' $false $false 'could not determine (verify on the Windows host)' }
 
+    # WSL command + modern Store build
+    $wsl = Get-KitWslInfo
+    & $add 'WSL (wsl command)' $true $wsl.Installed ($(if ($wsl.Installed) { 'installed' } else { 'not found - run: wsl --install' }))
+    & $add 'WSL2 (Store build, `wsl --version`)' $false $wsl.HasVersionCommand ($(if ($wsl.HasVersionCommand) { 'modern WSL detected (systemd-capable)' } else { 'run "wsl --update" / install WSL from the Microsoft Store' }))
+
+    # Git for Windows (credential manager + clones)
+    $git = Test-KitCommand -Name 'git'
+    & $add 'Git for Windows' $true $git ($(if ($git) { 'found' } else { 'not found - install Git for Windows' }))
+
+    # Docker Desktop (manual post-install step, so only a recommendation)
+    $docker = Test-KitDockerReady
+    & $add 'Docker Desktop (running + WSL integration)' $false $docker ($(if ($docker) { 'docker daemon reachable' } else { 'not ready - install Docker Desktop and enable WSL integration (post-install)' }))
+
+    # Windows Terminal (recommended)
+    $wt = Test-KitCommand -Name 'wt'
+    & $add 'Windows Terminal (recommended)' $false $wt ($(if ($wt) { 'found' } else { 'not found - optional, install from the Microsoft Store' }))
+
+    # Kit secrets
     if ($SecretsPath) {
         $st = Get-KitSecretsStatus -Path $SecretsPath
         $detail =
             if ($st.IsValid)   { 'present and valid' }
             elseif ($st.Exists) { 'present but LinuxPassword missing/placeholder' }
             else                { 'missing - run scripts\new-secrets.ps1' }
-        $checks.Add([pscustomobject]@{
-            Name     = 'config/secrets.local.ps1'
-            Required = $true
-            Ok       = $st.IsValid
-            Detail   = $detail
-        })
+        & $add 'config/secrets.local.ps1' $true $st.IsValid $detail
     }
 
     $checks.ToArray()

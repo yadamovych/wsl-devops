@@ -139,6 +139,58 @@ Describe 'Get-KitPrerequisite' {
     }
 }
 
+Describe 'Get-KitPrerequisite (mocked Windows host scenarios)' {
+    It 'passes every required check on a fully-ready Windows host' {
+        Mock -ModuleName KitSecrets -CommandName Get-KitOsInfo               -MockWith { [pscustomobject]@{ IsWindows = $true; Caption = 'Windows 11 Pro'; Build = 22631 } }
+        Mock -ModuleName KitSecrets -CommandName Test-KitVirtualizationEnabled -MockWith { $true }
+        Mock -ModuleName KitSecrets -CommandName Get-KitWslInfo              -MockWith { [pscustomobject]@{ Installed = $true; HasVersionCommand = $true } }
+        Mock -ModuleName KitSecrets -CommandName Test-KitDockerReady         -MockWith { $true }
+        Mock -ModuleName KitSecrets -CommandName Test-KitCommand             -MockWith { $true }
+
+        $checks  = Get-KitPrerequisite
+        $missing = @($checks | Where-Object { $_.Required -and -not $_.Ok })
+        $missing.Count | Should -Be 0
+        ($checks | Where-Object Name -like 'Docker*').Ok | Should -BeTrue
+    }
+
+    It 'flags a disabled BIOS virtualization as a required failure' {
+        Mock -ModuleName KitSecrets -CommandName Get-KitOsInfo               -MockWith { [pscustomobject]@{ IsWindows = $true; Caption = 'Windows 11 Pro'; Build = 22631 } }
+        Mock -ModuleName KitSecrets -CommandName Test-KitVirtualizationEnabled -MockWith { $false }
+        Mock -ModuleName KitSecrets -CommandName Get-KitWslInfo              -MockWith { [pscustomobject]@{ Installed = $true; HasVersionCommand = $true } }
+        Mock -ModuleName KitSecrets -CommandName Test-KitDockerReady         -MockWith { $true }
+        Mock -ModuleName KitSecrets -CommandName Test-KitCommand             -MockWith { $true }
+
+        $vt = Get-KitPrerequisite | Where-Object Name -like 'Hardware virtualization*'
+        $vt.Required | Should -BeTrue
+        $vt.Ok       | Should -BeFalse
+    }
+
+    It 'reports Docker Desktop / Windows Terminal as non-blocking warnings on a fresh host' {
+        Mock -ModuleName KitSecrets -CommandName Get-KitOsInfo               -MockWith { [pscustomobject]@{ IsWindows = $true; Caption = 'Windows 11 Pro'; Build = 22631 } }
+        Mock -ModuleName KitSecrets -CommandName Test-KitVirtualizationEnabled -MockWith { $true }
+        Mock -ModuleName KitSecrets -CommandName Get-KitWslInfo              -MockWith { [pscustomobject]@{ Installed = $true; HasVersionCommand = $true } }
+        Mock -ModuleName KitSecrets -CommandName Test-KitDockerReady         -MockWith { $false }
+        Mock -ModuleName KitSecrets -CommandName Test-KitCommand -ParameterFilter { $Name -eq 'git' } -MockWith { $true }
+        Mock -ModuleName KitSecrets -CommandName Test-KitCommand -ParameterFilter { $Name -eq 'wt' }  -MockWith { $false }
+
+        $checks  = Get-KitPrerequisite
+        $docker  = $checks | Where-Object Name -like 'Docker*'
+        $wt      = $checks | Where-Object Name -like 'Windows Terminal*'
+        $docker.Required | Should -BeFalse
+        $docker.Ok       | Should -BeFalse
+        $wt.Required     | Should -BeFalse
+        # Docker/WT being absent must not produce a required failure.
+        @($checks | Where-Object { $_.Required -and -not $_.Ok }).Count | Should -Be 0
+    }
+
+    It 'fails the Windows OS check when not running on Windows' {
+        Mock -ModuleName KitSecrets -CommandName Get-KitOsInfo -MockWith { [pscustomobject]@{ IsWindows = $false; Caption = $null; Build = $null } }
+        $osCheck = Get-KitPrerequisite | Where-Object Name -eq 'Operating system: Windows'
+        $osCheck.Required | Should -BeTrue
+        $osCheck.Ok       | Should -BeFalse
+    }
+}
+
 Describe 'Request-KitSecrets (interactive flow, mocked prompts)' {
     BeforeEach {
         $script:tmp  = Join-Path ([System.IO.Path]::GetTempPath()) ([System.IO.Path]::GetRandomFileName())
