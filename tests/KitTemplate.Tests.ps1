@@ -116,4 +116,11 @@ $SshKeyComment = "test@example.com"
     It 'substitutes the WSL memory in .wslconfig' {
         $script:wslConfig | Should -Match 'memory=8GB'
     }
+    It 'creates the docker group before usermod (avoids "group does not exist")' {
+        $script:cloudInit | Should -Match 'groupadd -f docker'
+        $gi = $script:cloudInit.IndexOf('groupadd -f docker')
+        $ui = $script:cloudInit.IndexOf('usermod -aG docker')
+        $gi | Should -BeGreaterThan -1
+        $gi | Should -BeLessThan $ui
+    }
 }
