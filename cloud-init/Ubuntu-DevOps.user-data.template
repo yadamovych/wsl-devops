@@ -63,13 +63,20 @@ write_files:
         "/home/$U/.cache/tofu/plugins" "/home/$U/.ssh"
       chmod 700 "/home/$U/.ssh"
 
-      # ── Snap tools: aws, opentofu, kubectl, helm, asdf, glab ────────────────
-      snap install aws-cli --classic
-      snap install opentofu --classic
-      snap install kubectl --classic
-      snap install helm --classic
-      snap install asdf --classic
-      snap install glab --classic
+      # ── Snap tools: aws, opentofu, kubectl, helm, glab ─────────────────────
+      snap install aws-cli --classic 2>&1 | grep -v "not found in your \$PATH" || true
+      snap install opentofu --classic 2>&1 | grep -v "not found in your \$PATH" || true
+      snap install kubectl --classic 2>&1 | grep -v "not found in your \$PATH" || true
+      snap install helm --classic 2>&1 | grep -v "not found in your \$PATH" || true
+      snap install glab --classic 2>&1 | grep -v "not found in your \$PATH" || true
+
+      # ── asdf (standalone binary - not available in snap) ───────────────────
+      ASDF_VER="0.19.0"
+      curl -fsSL "https://github.com/asdf-vm/asdf/releases/download/v${ASDF_VER}/asdf-v${ASDF_VER}-linux-amd64.tar.gz" \
+        -o /tmp/asdf.tar.gz
+      tar -xzf /tmp/asdf.tar.gz -C /usr/local/bin asdf
+      chmod +x /usr/local/bin/asdf
+      rm /tmp/asdf.tar.gz
 
       # ── Update PATH to include snap binaries ───────────────────────────────
       sudo -u "$U" tee -a "/home/$U/.bashrc" >/dev/null <<'SNAPPATH'
