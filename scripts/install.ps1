@@ -19,6 +19,10 @@ if (-not (Test-CommandExists 'wsl')) {
 $wslVersion = wsl --version 2>&1
 Write-Host $wslVersion
 
+# Verify prerequisites and (interactively) create config\secrets.local.ps1 if needed,
+# so the render/deploy steps below have everything they require.
+& (Join-Path $PSScriptRoot 'preflight.ps1')
+
 & (Join-Path $PSScriptRoot 'deploy-cloud-init.ps1')
 & (Join-Path $PSScriptRoot 'deploy-wslconfig.ps1')
 
