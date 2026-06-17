@@ -1,0 +1,113 @@
+#cloud-config
+hostname: dev-wsl
+timezone: {{TIMEZONE}}
+locale: {{LOCALE}}
+
+users:
+  - name: {{LINUX_USERNAME}}
+    gecos: DevOps User
+    groups: [adm, dialout, cdrom, floppy, sudo, audio, dip, video, plugdev, netdev]
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    lock_passwd: false
+    plain_text_passwd: {{LINUX_PASSWORD}}
+
+write_files:
+  - path: /etc/wsl.conf
+    permissions: '0644'
+    content: |
+      [boot]
+      systemd=true
+
+      [user]
+      default={{LINUX_USERNAME}}
+
+      [automount]
+      enabled=true
+      root=/mnt/
+      options="metadata,umask=22,fmask=11"
+      mountFsTab=true
+
+      [network]
+      generateHosts=true
+      generateResolvConf=true
+      hostname=dev-wsl
+
+      [interop]
+      enabled=true
+      appendWindowsPath=false
+
+  - path: /opt/bootstrap-devops.sh
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      set -euo pipefail
+      USER={{LINUX_USERNAME}}
+      export DEBIAN_FRONTEND=noninteractive
+
+      apt-get update
+      apt-get full-upgrade -y
+      apt-get install -y \
+        build-essential curl wget unzip zip jq \
+        git git-lfs gnupg ca-certificates apt-transport-https \
+        htop tree tmux ripgrep fd-find \
+        python3 python3-venv python3-pip pipx \
+        direnv pass age \
+        net-tools dnsutils iputils-ping openssh-client \
+        unattended-upgrades vim
+
+      sudo -u "$USER" pipx ensurepath || true
+      sudo -u "$USER" mkdir -p "/home/$USER/projects" "/home/$USER/bin" \
+        "/home/$USER/.config/aws" "/home/$USER/.config/opentofu" \
+        "/home/$USER/.cache/tofu/plugins" "/home/$USER/.ssh"
+      chmod 700 "/home/$USER/.ssh"
+
+      curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+      unzip -q /tmp/awscliv2.zip -d /tmp
+      /tmp/aws/install --update
+      rm -rf /tmp/aws /tmp/awscliv2.zip
+
+      install -m 0755 -d /etc/apt/keyrings
+      curl -fsSL https://get.opentofu.org/opentofu.gpg | tee /etc/apt/keyrings/opentofu.gpg >/dev/null
+      curl -fsSL https://packages.opentofu.org/opentofu/tofu/gpgkey | gpg --no-tty --batch --dearmor -o /etc/apt/keyrings/opentofu-repo.gpg
+      chmod a+r /etc/apt/keyrings/opentofu.gpg /etc/apt/keyrings/opentofu-repo.gpg
+      echo "deb [signed-by=/etc/apt/keyrings/opentofu.gpg,/etc/apt/keyrings/opentofu-repo.gpg] https://packages.opentofu.org/opentofu/tofu/any/ any main" > /etc/apt/sources.list.d/opentofu.list
+
+      curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+      echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /" > /etc/apt/sources.list.d/kubernetes.list
+
+      apt-get update
+      apt-get install -y tofu kubectl
+      curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+      sudo -u "$USER" tee "/home/$USER/.tofurc" >/dev/null <<'TOFURC'
+      plugin_cache_dir = "$HOME/.cache/tofu/plugins"
+      TOFURC
+
+      sudo -u "$USER" tee -a "/home/$USER/.bashrc" >/dev/null <<'BASHRC'
+
+      export EDITOR=vim
+      export PROJECTS=~/projects
+      cd ~/projects 2>/dev/null || true
+      alias clip='clip.exe'
+      alias explorer='explorer.exe'
+      eval "$(direnv hook bash)"
+      BASHRC
+
+      sudo -u "$USER" git config --global init.defaultBranch main
+      sudo -u "$USER" git config --global core.autocrlf input
+      sudo -u "$USER" git config --global pull.rebase false
+      sudo -u "$USER" git config --global user.name "{{GIT_USER_NAME}}"
+      sudo -u "$USER" git config --global user.email "{{GIT_USER_EMAIL}}"
+      sudo -u "$USER" git config --global credential.helper "/mnt/c/Program Files/Git/mingw64/bin/git-credential-manager.exe"
+
+      if [ ! -f "/home/$USER/.ssh/id_ed25519" ]; then
+        sudo -u "$USER" ssh-keygen -t ed25519 -C "{{SSH_KEY_COMMENT}}" -f "/home/$USER/.ssh/id_ed25519" -N ""
+      fi
+
+      apt-get autoremove -y
+      dpkg-reconfigure -f noninteractive unattended-upgrades
+
+runcmd:
+  - [bash, /opt/bootstrap-devops.sh]
+  - [cloud-init, status, --wait]

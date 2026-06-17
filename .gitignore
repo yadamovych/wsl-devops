@@ -1,0 +1,11 @@
+# Secrets — never commit
+config/secrets.local.ps1
+
+# Rendered outputs (generated locally by install.ps1)
+.cloud-init-rendered/
+config/rendered/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp

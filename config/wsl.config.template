@@ -1,0 +1,10 @@
+[wsl2]
+memory={{WSL_MEMORY}}
+processors={{WSL_PROCESSORS}}
+swap={{WSL_SWAP}}
+
+[experimental]
+autoMemoryReclaim=gradual
+networkingMode=mirrored
+dnsTunneling=true
+sparseVhd=true
