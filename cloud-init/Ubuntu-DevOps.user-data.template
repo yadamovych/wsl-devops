@@ -88,7 +88,8 @@ write_files:
 
       # ── oh-my-zsh ────────────────────────────────────────────────────────────
       # CHSH=no / RUNZSH=no: we set the shell ourselves, skip auto-launch.
-      sudo -u "$U" env HOME="/home/$U" CHSH=no RUNZSH=no \
+      # Pipe 'y' to auto-answer the overwrite prompt
+      echo "y" | sudo -u "$U" env HOME="/home/$U" CHSH=no RUNZSH=no \
         sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
       usermod -s /bin/zsh "$U"
 
