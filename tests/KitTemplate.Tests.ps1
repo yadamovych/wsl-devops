@@ -116,6 +116,9 @@ $SshKeyComment = "test@example.com"
     It 'substitutes the WSL memory in .wslconfig' {
         $script:wslConfig | Should -Match 'memory=8GB'
     }
+    It 'does not actively enable dnsTunneling (avoids the "not supported" warning)' {
+        $script:wslConfig | Should -Not -Match '(?m)^\s*dnsTunneling\s*='
+    }
     It 'creates the docker group before usermod (avoids "group does not exist")' {
         $script:cloudInit | Should -Match 'groupadd -f docker'
         $gi = $script:cloudInit.IndexOf('groupadd -f docker')
