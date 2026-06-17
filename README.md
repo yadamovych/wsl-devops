@@ -8,7 +8,7 @@ Repeatable **Ubuntu 26.04 WSL** setup for daily DevOps work: **AWS CLI**, **Open
 
 - Installs Ubuntu 26.04 via official `.wsl` bundle (Method B)
 - Provisions with **cloud-init** (user, systemd, packages, tools)
-- Configures Windows `.wslconfig` (memory, mirrored networking)
+- Configures Windows `.wslconfig` (memory, CPUs, swap, NAT networking)
 - One-command install and repeatable rebuild
 
 ## Quick start
@@ -46,8 +46,11 @@ git pull
 
 | File | Purpose | Commit? |
 |------|---------|---------|
-| [config/kit.config.ps1](config/kit.config.ps1) | Distro name, timezone, WSL RAM | Yes |
-| [config/secrets.local.ps1](config/secrets.local.ps1) | Password, git identity | **No** (gitignored) |
+| [config/kit.config.ps1](config/kit.config.ps1) | Distro name, timezone, WSL RAM/CPUs/swap | Yes |
+| [config/tool-versions.ps1](config/tool-versions.ps1) | Pinned tool versions (asdf, glab, gitlabber, kubectl) | Yes |
+| [config/wsl.config.template](config/wsl.config.template) | `.wslconfig` template (VM resources, experimental flags) | Yes |
+| [config/secrets.local.ps1.example](config/secrets.local.ps1.example) | Template for `config/secrets.local.ps1` (password, git identity) | Yes |
+| `config/secrets.local.ps1` | Your password + git identity (created locally) | **No** (gitignored) |
 | [cloud-init/Ubuntu-DevOps.user-data.template](cloud-init/Ubuntu-DevOps.user-data.template) | Provisioning template | Yes |
 
 ## Manual steps after install
