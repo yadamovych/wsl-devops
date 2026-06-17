@@ -7,12 +7,12 @@ $RepoRoot = Split-Path -Parent $PSScriptRoot
 
 $SecretsPath = Join-Path $RepoRoot 'config\secrets.local.ps1'
 if (-not (Test-Path $SecretsPath)) {
-    throw "Missing config\secrets.local.ps1 — copy from secrets.local.ps1.example and edit."
+    throw 'Missing config\secrets.local.ps1 - copy from secrets.local.ps1.example and edit.'
 }
 . $SecretsPath
 
 if ($LinuxPassword -eq 'CHANGE_ME') {
-    throw "Edit config\secrets.local.ps1 — LinuxPassword is still CHANGE_ME."
+    throw 'Edit config\secrets.local.ps1 - LinuxPassword is still CHANGE_ME.'
 }
 
 $RenderDir = Join-Path $RepoRoot '.cloud-init-rendered'
@@ -28,7 +28,7 @@ $Replacements = @{
     '{{SSH_KEY_COMMENT}}' = $SshKeyComment
     '{{WSL_MEMORY}}'      = $WslMemory
     '{{WSL_PROCESSORS}}'  = [string]$WslProcessors
-    '{{WSL_SWAP}}'          = $WslSwap
+    '{{WSL_SWAP}}'        = $WslSwap
 }
 
 function Expand-Template {
@@ -37,19 +37,19 @@ function Expand-Template {
     foreach ($key in $Replacements.Keys) {
         $content = $content.Replace($key, $Replacements[$key])
     }
-    if (-not $content.StartsWith('#cloud-config') -and $Path -like '*user-data*') {
-        throw "Rendered cloud-init must start with #cloud-config"
+    if (($Path -like '*user-data*') -and (-not $content.StartsWith('#cloud-config'))) {
+        throw 'Rendered cloud-init must start with #cloud-config'
     }
     Set-Content -Path $OutPath -Value $content -Encoding utf8NoBOM
 }
 
 $CloudInitTemplate = Join-Path $RepoRoot 'cloud-init\Ubuntu-DevOps.user-data.template'
-$CloudInitOut = Join-Path $RenderDir "$DistroName.user-data"
+$CloudInitOut      = Join-Path $RenderDir ('{0}.user-data' -f $DistroName)
 Expand-Template -Path $CloudInitTemplate -OutPath $CloudInitOut
 
 $WslConfigTemplate = Join-Path $RepoRoot 'config\wsl.config.template'
-$WslConfigOut = Join-Path $RenderDir '.wslconfig'
+$WslConfigOut      = Join-Path $RenderDir '.wslconfig'
 Expand-Template -Path $WslConfigTemplate -OutPath $WslConfigOut
 
-Write-Host "Rendered cloud-init: $CloudInitOut"
-Write-Host "Rendered wslconfig:   $WslConfigOut"
+Write-Host ('Rendered cloud-init : {0}' -f $CloudInitOut)
+Write-Host ('Rendered wslconfig  : {0}' -f $WslConfigOut)

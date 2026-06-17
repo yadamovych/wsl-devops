@@ -10,7 +10,7 @@ function Test-CommandExists {
     $null -ne (Get-Command $Name -ErrorAction SilentlyContinue)
 }
 
-Write-Host "=== WSL DevOps Kit v$KitVersion ===" -ForegroundColor Cyan
+Write-Host ('=== WSL DevOps Kit v{0} ===' -f $KitVersion) -ForegroundColor Cyan
 
 if (-not (Test-CommandExists 'wsl')) {
     throw 'WSL not found. Run: wsl --install, then reboot.'
@@ -23,29 +23,29 @@ Write-Host $wslVersion
 & (Join-Path $PSScriptRoot 'deploy-wslconfig.ps1')
 
 if (-not (Test-Path $WslImagePath)) {
-    Write-Host "Downloading WSL image to $WslImagePath ..."
+    Write-Host ('Downloading WSL image to {0} ...' -f $WslImagePath)
     New-Item -ItemType Directory -Force -Path (Split-Path $WslImagePath) | Out-Null
     Invoke-WebRequest -Uri $WslImageUrl -OutFile $WslImagePath -UseBasicParsing
 }
 
-Write-Host "Verifying SHA256 ..."
+Write-Host 'Verifying SHA256 ...'
 $shaFile = Join-Path $env:TEMP 'ubuntu-wsl-SHA256SUMS'
 Invoke-WebRequest -Uri $WslSha256Url -OutFile $shaFile -UseBasicParsing
-$expectedLine = Get-Content $shaFile | Where-Object { $_ -match 'ubuntu-26.04-wsl-amd64\.wsl' }
+$expectedLine = Get-Content $shaFile | Where-Object { $_ -match 'ubuntu-26\.04-wsl-amd64\.wsl' }
 if ($expectedLine) {
     $expectedHash = ($expectedLine -split '\s+', 2)[0]
     $actualHash = (Get-FileHash $WslImagePath -Algorithm SHA256).Hash.ToLower()
     if ($actualHash -ne $expectedHash.ToLower()) {
-        throw "SHA256 mismatch for $WslImagePath"
+        throw ('SHA256 mismatch for {0}' -f $WslImagePath)
     }
-    Write-Host "SHA256 OK"
+    Write-Host 'SHA256 OK'
 } else {
-    Write-Warning "Could not find hash line in SHA256SUMS — skipping verification"
+    Write-Warning 'Could not find hash line in SHA256SUMS - skipping verification'
 }
 
 $existing = wsl --list --quiet 2>$null
 if ($existing -contains $DistroName) {
-    Write-Host "Distro '$DistroName' already exists. Run scripts\uninstall.ps1 first for a clean install." -ForegroundColor Yellow
+    Write-Host ('Distro {0} already exists. Run scripts\uninstall.ps1 first.' -f $DistroName) -ForegroundColor Yellow
     exit 1
 }
 
@@ -55,16 +55,16 @@ wsl --install --from-file $WslImagePath --name $DistroName --no-launch
 wsl --set-default $DistroName
 wsl --set-version $DistroName 2 2>$null
 
-Write-Host 'First launch — cloud-init provisioning, about 5-15 min ...'
-wsl -d $DistroName -e bash -lc "echo 'Provisioning started'; exit 0"
+Write-Host 'First launch - cloud-init provisioning, about 5-15 min ...'
+wsl -d $DistroName
 
-Write-Host 'Applying .wslconfig — shutdown and restart ...'
+Write-Host 'Applying .wslconfig - shutdown and restart ...'
 wsl --shutdown
 Start-Sleep -Seconds 8
-wsl -d $DistroName -e bash -lc "echo 'WSL restarted'; exit 0"
+wsl -d $DistroName -e bash -lc "echo 'WSL restarted'"
 
 & (Join-Path $PSScriptRoot 'verify.ps1')
 
-Write-Host ""
-Write-Host "Install complete. Complete manual steps:" -ForegroundColor Green
-Write-Host "  checklists\repeat-install.md"
+Write-Host ''
+Write-Host 'Install complete. Complete manual steps:' -ForegroundColor Green
+Write-Host '  checklists\repeat-install.md'
