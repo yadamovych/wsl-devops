@@ -30,8 +30,13 @@ no long-running service to start. The cloud agent runs on Linux, so keep the fol
   into the cloud-init and `.wslconfig` templates, writing results to `.cloud-init-rendered/`.
   The reusable substitution logic lives in `scripts/KitTemplate.psm1` (`Expand-KitTemplate`).
 - It **requires** `config/secrets.local.ps1` (gitignored). Create it from
-  `config/secrets.local.ps1.example` and set `LinuxPassword` to anything other than `CHANGE_ME`
-  (the script throws otherwise).
+  `config/secrets.local.ps1.example`, or run `scripts/new-secrets.ps1` (interactive prompt), and
+  set `LinuxPassword` to anything other than `CHANGE_ME`.
+- When `secrets.local.ps1` is missing/invalid, `render-templates.ps1` prompts to create it **only
+  in an interactive session**; in a non-interactive/CI session it throws actionable guidance.
+  Set `KIT_NONINTERACTIVE=1` to force the non-interactive behavior (the test suite relies on this).
+- `scripts/preflight.ps1` runs a prerequisite check (PowerShell/WSL/git/secrets) and is invoked at
+  the top of `install.ps1`. Secrets/prereq helpers live in `scripts/KitSecrets.psm1`.
 - Run it with: `pwsh -NoProfile -File scripts/render-templates.ps1`.
 - Validate the rendered cloud-init with:
   `python3 -c "import yaml; yaml.safe_load(open('.cloud-init-rendered/Ubuntu-DevOps.user-data'))"`

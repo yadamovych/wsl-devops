@@ -16,11 +16,15 @@ Repeatable **Ubuntu 26.04 WSL** setup for daily DevOps work: **AWS CLI**, **Open
 ```powershell
 git clone https://github.com/yadamovych/wsl-devops.git
 cd wsl-devops
-copy config\secrets.local.ps1.example config\secrets.local.ps1
-# Edit config\secrets.local.ps1 — password, git name, email
 Set-ExecutionPolicy -Scope Process Bypass
+.\scripts\new-secrets.ps1   # interactive prompt that creates config\secrets.local.ps1
 .\scripts\install.ps1
 ```
+
+`install.ps1` runs `scripts\preflight.ps1` first to verify prerequisites (WSL, git, secrets)
+and will offer to create `config\secrets.local.ps1` interactively if it is missing. You can
+still create it manually instead: `copy config\secrets.local.ps1.example config\secrets.local.ps1`
+then edit the password / git identity.
 
 Then complete [checklists/repeat-install.md](checklists/repeat-install.md) (AWS SSO, Docker WSL toggle, SSH key).
 
