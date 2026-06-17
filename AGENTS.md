@@ -35,8 +35,15 @@ no long-running service to start. The cloud agent runs on Linux, so keep the fol
 - When `secrets.local.ps1` is missing/invalid, `render-templates.ps1` prompts to create it **only
   in an interactive session**; in a non-interactive/CI session it throws actionable guidance.
   Set `KIT_NONINTERACTIVE=1` to force the non-interactive behavior (the test suite relies on this).
-- `scripts/preflight.ps1` runs a prerequisite check (PowerShell/WSL/git/secrets) and is invoked at
-  the top of `install.ps1`. Secrets/prereq helpers live in `scripts/KitSecrets.psm1`.
+- `scripts/preflight.ps1` runs a fresh-Windows-host prerequisite check and is invoked at the top of
+  `install.ps1`. `Get-KitPrerequisite` (in `scripts/KitSecrets.psm1`) checks: PowerShell >= 5.1,
+  Windows OS + build >= 19044, hardware virtualization, WSL command, modern WSL2/Store build, Git
+  for Windows, Docker Desktop running (WSL integration), Windows Terminal, and the kit secrets file.
+- Required checks gate install (preflight throws); Docker Desktop / Windows Terminal / WSL2-Store are
+  `[WARN]`-only (Docker Desktop integration is a documented post-install manual step).
+- The Windows-specific probes (`Get-KitOsInfo`, `Test-KitVirtualizationEnabled`, `Get-KitWslInfo`,
+  `Test-KitDockerReady`, `Test-KitCommand`) are isolated functions so they can be mocked in tests and
+  run harmlessly on non-Windows (they report unknown/false rather than throwing).
 - Run it with: `pwsh -NoProfile -File scripts/render-templates.ps1`.
 - Validate the rendered cloud-init with:
   `python3 -c "import yaml; yaml.safe_load(open('.cloud-init-rendered/Ubuntu-DevOps.user-data'))"`

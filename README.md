@@ -21,8 +21,10 @@ Set-ExecutionPolicy -Scope Process Bypass
 .\scripts\install.ps1
 ```
 
-`install.ps1` runs `scripts\preflight.ps1` first to verify prerequisites (WSL, git, secrets)
-and will offer to create `config\secrets.local.ps1` interactively if it is missing. You can
+`install.ps1` runs `scripts\preflight.ps1` first to verify everything a fresh Windows host needs
+(Windows build, hardware virtualization, WSL/WSL2, Git for Windows, Docker Desktop, Windows
+Terminal, and the secrets file) and will offer to create `config\secrets.local.ps1` interactively
+if it is missing. Docker Desktop / Windows Terminal are reported as warnings, not blockers. You can
 still create it manually instead: `copy config\secrets.local.ps1.example config\secrets.local.ps1`
 then edit the password / git identity.
 
