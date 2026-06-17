@@ -41,9 +41,9 @@ write_files:
     permissions: '0755'
     content: |
       #!/bin/bash
-      set -euo pipefail
-      U={{LINUX_USERNAME}}
+      set -u
       export DEBIAN_FRONTEND=noninteractive
+      U={{LINUX_USERNAME}}
 
       # ── base packages ────────────────────────────────────────────────────────
       apt-get update
@@ -64,11 +64,11 @@ write_files:
       chmod 700 "/home/$U/.ssh"
 
       # ── Snap tools: aws, opentofu, kubectl, helm, glab ─────────────────────
-      snap install aws-cli --classic 2>&1 | grep -v "not found in your \$PATH" || true
-      snap install opentofu --classic 2>&1 | grep -v "not found in your \$PATH" || true
-      snap install kubectl --classic 2>&1 | grep -v "not found in your \$PATH" || true
-      snap install helm --classic 2>&1 | grep -v "not found in your \$PATH" || true
-      snap install glab --classic 2>&1 | grep -v "not found in your \$PATH" || true
+      snap install aws-cli --classic || true
+      snap install opentofu --classic || true
+      snap install kubectl --classic || true
+      snap install helm --classic || true
+      snap install glab --classic || true
 
       # ── asdf (standalone binary - not available in snap) ───────────────────
       ASDF_VER="0.19.0"
