@@ -13,7 +13,7 @@ function Test-CommandExists {
 Write-Host "=== WSL DevOps Kit v$KitVersion ===" -ForegroundColor Cyan
 
 if (-not (Test-CommandExists 'wsl')) {
-    throw "WSL not found. Run: wsl --install (then reboot)."
+    throw 'WSL not found. Run: wsl --install, then reboot.'
 }
 
 $wslVersion = wsl --version 2>&1
@@ -49,16 +49,16 @@ if ($existing -contains $DistroName) {
     exit 1
 }
 
-Write-Host "Installing $DistroName from .wsl bundle (--no-launch) ..."
+Write-Host ('Installing {0} from .wsl bundle with --no-launch ...' -f $DistroName)
 wsl --install --from-file $WslImagePath --name $DistroName --no-launch
 
 wsl --set-default $DistroName
 wsl --set-version $DistroName 2 2>$null
 
-Write-Host "First launch — cloud-init provisioning (5-15 min) ..."
+Write-Host 'First launch — cloud-init provisioning, about 5-15 min ...'
 wsl -d $DistroName -e bash -lc "echo 'Provisioning started'; exit 0"
 
-Write-Host "Applying .wslconfig (shutdown + restart) ..."
+Write-Host 'Applying .wslconfig — shutdown and restart ...'
 wsl --shutdown
 Start-Sleep -Seconds 8
 wsl -d $DistroName -e bash -lc "echo 'WSL restarted'; exit 0"
