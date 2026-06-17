@@ -53,10 +53,11 @@ Write-Host ('Installing {0} from .wsl bundle with --no-launch ...' -f $DistroNam
 wsl --install --from-file $WslImagePath --name $DistroName --no-launch
 
 wsl --set-default $DistroName
-wsl --set-version $DistroName 2 2>$null
 
-Write-Host 'First launch - cloud-init provisioning, about 5-15 min ...'
-wsl -d $DistroName
+# First boot triggers cloud-init. Block until all stages complete, then exit.
+# Output from the bootstrap script appears inside the WSL session in real time.
+Write-Host 'First launch - cloud-init provisioning (5-15 min, please wait) ...'
+wsl -d $DistroName -- bash -c "cloud-init status --wait; echo ''; echo '=== cloud-init done ==='"
 
 Write-Host 'Applying .wslconfig - shutdown and restart ...'
 wsl --shutdown

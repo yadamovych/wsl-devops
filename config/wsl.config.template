@@ -7,4 +7,6 @@ swap={{WSL_SWAP}}
 autoMemoryReclaim=gradual
 networkingMode=mirrored
 dnsTunneling=true
-sparseVhd=true
+# sparseVhd=true is disabled in some WSL builds due to data-corruption risk;
+# enable manually once your WSL version supports it:
+#   wsl --manage Ubuntu-DevOps --set-sparse true --allow-unsafe
