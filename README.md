@@ -2,7 +2,7 @@
 
 Repeatable **Ubuntu 26.04 WSL** setup for daily DevOps work: **AWS CLI**, **OpenTofu**, **kubectl**, **Helm**, **Docker Desktop** integration.
 
-**Version:** see [VERSION](VERSION)
+**Version:** see [VERSION](VERSION) · changes in [CHANGELOG.md](CHANGELOG.md)
 
 ## What this does
 
