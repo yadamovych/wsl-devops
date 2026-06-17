@@ -5,6 +5,7 @@ locale: {{LOCALE}}
 
 users:
   - name: {{LINUX_USERNAME}}
+    uid: 1100
     gecos: DevOps User
     groups: [adm, dialout, cdrom, floppy, sudo, audio, dip, video, plugdev, netdev]
     shell: /bin/bash
@@ -45,7 +46,7 @@ write_files:
       export DEBIAN_FRONTEND=noninteractive
       U={{LINUX_USERNAME}}
 
-      # ── base packages ────────────────────────────────────────────────────────
+      # -- base packages --------------------------------------------------------
       apt-get update
       apt-get full-upgrade -y
       apt-get install -y \
@@ -66,17 +67,37 @@ write_files:
       # snap checks $PATH for /snap/bin before each install; set it now (not only in .bashrc).
       export PATH="/snap/bin:$PATH"
 
-      # ── Snap tools: aws, opentofu, kubectl, helm, glab ─────────────────────
+      # -- Snap tools: aws, opentofu, kubectl, helm, glab ---------------------
       snap install aws-cli --classic || true
       snap install opentofu --classic || true
       snap install kubectl --classic || true
       snap install helm --classic || true
       snap install glab || true
 
-      # ── gitlabber (pipx; GITLABBER_CLONE_METHOD=http uses HTTPS clone URLs) ─
-      sudo -u "$U" pipx install "gitlabber=={{GITLABBER_VERSION}}" || true
+      # -- Docker CLI (client only - use Docker Desktop daemon via WSL integration) -
+      install -m 0755 -d /etc/apt/keyrings
+      curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+      chmod a+r /etc/apt/keyrings/docker.asc
+      . /etc/os-release
+      DOCKER_CODENAME="${VERSION_CODENAME}"
+      if ! curl -fsSL "https://download.docker.com/linux/ubuntu/dists/${DOCKER_CODENAME}/Release" >/dev/null 2>&1; then
+        DOCKER_CODENAME="noble"
+      fi
+      echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu ${DOCKER_CODENAME} stable" \
+        | tee /etc/apt/sources.list.d/docker.list >/dev/null
+      apt-get update
+      apt-get install -y docker-ce-cli docker-compose-plugin
+      usermod -aG docker "$U" || true
 
-      # ── asdf (standalone binary - not available in snap) ───────────────────
+      # -- gitlabber (pipx; silent install; GITLABBER_CLONE_METHOD=http = HTTPS clones) -
+      sudo -u "$U" env \
+        HOME="/home/$U" \
+        PATH="/home/$U/.local/bin:/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+        PIP_NO_INPUT=1 NO_COLOR=1 FORCE_COLOR=0 \
+        pipx install --quiet "gitlabber=={{GITLABBER_VERSION}}" \
+        >/dev/null 2>&1 || true
+
+      # -- asdf (standalone binary - not available in snap) -------------------
       ASDF_VER="0.19.0"
       curl -fsSL "https://github.com/asdf-vm/asdf/releases/download/v${ASDF_VER}/asdf-v${ASDF_VER}-linux-amd64.tar.gz" \
         -o /tmp/asdf.tar.gz
@@ -84,27 +105,27 @@ write_files:
       chmod +x /usr/local/bin/asdf
       rm /tmp/asdf.tar.gz
 
-      # ── Update PATH to include snap binaries ───────────────────────────────
+      # -- Update PATH to include snap binaries -------------------------------
       sudo -u "$U" tee -a "/home/$U/.bashrc" >/dev/null <<'SNAPPATH'
-      export PATH="/snap/bin:$PATH"
+      export PATH="$HOME/.local/bin:/snap/bin:$PATH"
       SNAPPATH
       sudo -u "$U" tee -a "/home/$U/.zshrc" >/dev/null <<'SNAPPATH'
-      export PATH="/snap/bin:$PATH"
+      export PATH="$HOME/.local/bin:/snap/bin:$PATH"
       SNAPPATH
 
-      # # ── oh-my-zsh ────────────────────────────────────────────────────────────
+      # # -- oh-my-zsh ------------------------------------------------------------
       # # CHSH=no / RUNZSH=no: we set the shell ourselves, skip auto-launch.
       # # echo y: auto-answer overwrite prompt when .zshrc already exists.
       # echo "y" | sudo -u "$U" env HOME="/home/$U" CHSH=no RUNZSH=no \
       #   sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
       # usermod -s /bin/zsh "$U"
 
-      # ── OpenTofu plugin cache ────────────────────────────────────────────────
+      # -- OpenTofu plugin cache ------------------------------------------------
       sudo -u "$U" tee "/home/$U/.tofurc" >/dev/null <<'TOFURC'
       plugin_cache_dir = "$HOME/.cache/tofu/plugins"
       TOFURC
 
-      # ── bash additions (.bashrc) ─────────────────────────────────────────────
+      # -- bash additions (.bashrc) ---------------------------------------------
       sudo -u "$U" tee -a "/home/$U/.bashrc" >/dev/null <<'BASHRC'
 
       export EDITOR=vim
@@ -116,7 +137,7 @@ write_files:
       eval "$(direnv hook bash)"
       BASHRC
 
-      # ── zsh additions (.zshrc, appended after oh-my-zsh template) ───────────
+      # -- zsh additions (.zshrc, appended after oh-my-zsh template) -----------
       sudo -u "$U" tee -a "/home/$U/.zshrc" >/dev/null <<'ZSHRC'
 
       export EDITOR=vim
@@ -128,7 +149,7 @@ write_files:
       eval "$(direnv hook zsh)"
       ZSHRC
 
-      # ── git global config ────────────────────────────────────────────────────
+      # -- git global config ----------------------------------------------------
       sudo -u "$U" git config --global init.defaultBranch main
       sudo -u "$U" git config --global core.autocrlf input
       sudo -u "$U" git config --global pull.rebase false
@@ -136,11 +157,11 @@ write_files:
       sudo -u "$U" git config --global user.email "{{GIT_USER_EMAIL}}"
       sudo -u "$U" git config --global credential.helper "/mnt/c/Program\ Files/Git/mingw64/libexec/git-core/git-credential-wincred.exe"
 
-      # ── SSH key ──────────────────────────────────────────────────────────────
+      # -- SSH key --------------------------------------------------------------
       if [ ! -f "/home/$U/.ssh/id_ed25519" ]; then
         sudo -u "$U" ssh-keygen -t ed25519 -C "{{SSH_KEY_COMMENT}}" -f "/home/$U/.ssh/id_ed25519" -N ""
       fi
 
-      # ── cleanup ──────────────────────────────────────────────────────────────
+      # -- cleanup --------------------------------------------------------------
       apt-get autoremove -y
       dpkg-reconfigure -f noninteractive unattended-upgrades

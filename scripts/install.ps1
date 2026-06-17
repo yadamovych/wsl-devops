@@ -106,18 +106,22 @@ if ($done) {
 Write-Host 'Applying .wslconfig - shutdown and restart ...'
 wsl --shutdown
 Start-Sleep -Seconds 8
-# Restart under the devops user (wsl.conf now has [user] default=devops).
+# Explicit default user avoids "Failed to start the systemd user session for root"
+# when later WSL sessions launch as a normal user (wsl.conf alone is not always enough).
+Write-Host ('Setting default user to {0} ...' -f $LinuxUsername)
+wsl --manage $DistroName --set-default-user $LinuxUsername
 $ErrorActionPreference = 'Continue'
 wsl -d $DistroName -- bash -lc "echo 'WSL restarted OK'" 2>&1 | Out-Null
 $ErrorActionPreference = 'Stop'
 
 # ── Run bootstrap script ────────────────────────────────────────────────────────
 # On WSL, cloud-init's runcmd is not reliably executed. Run the bootstrap
-# script explicitly as root after restart to install all tools.
+# script explicitly after restart. Use the default (non-root) user + sudo so
+# WSL does not try to start a systemd user session for root.
 Write-Host ''
 Write-Host 'Running bootstrap script (5-10 min) ...'
 $ErrorActionPreference = 'Continue'
-wsl -d $DistroName -u root -- bash /opt/bootstrap-devops.sh 2>&1
+wsl -d $DistroName -- sudo bash /opt/bootstrap-devops.sh 2>&1
 $bootstrapExitCode = $LASTEXITCODE
 $ErrorActionPreference = 'Stop'
 
@@ -126,7 +130,7 @@ if ($bootstrapExitCode -eq 0) {
 } else {
     Write-Host "✗ Bootstrap failed with exit code $bootstrapExitCode" -ForegroundColor Red
     Write-Host 'Check the output above for errors. To retry:'
-    Write-Host "  wsl -d $DistroName -u root -- bash /opt/bootstrap-devops.sh"
+    Write-Host "  wsl -d $DistroName -- sudo bash /opt/bootstrap-devops.sh"
 }
 
 & (Join-Path $PSScriptRoot 'verify.ps1')

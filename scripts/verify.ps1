@@ -24,6 +24,8 @@ $checks = @(
     'asdf version'
     'glab --version'
     'gitlabber --version'
+    'docker --version'
+    'docker compose version 2>/dev/null || true'
     'zsh --version'
     'git --version'
     'jq --version'
