@@ -5,6 +5,7 @@ $ErrorActionPreference = 'Stop'
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 . (Join-Path $RepoRoot 'config\kit.config.ps1')
 . (Join-Path $RepoRoot 'config\tool-versions.ps1')
+Import-Module (Join-Path $PSScriptRoot 'KitTemplate.psm1') -Force
 
 $SecretsPath = Join-Path $RepoRoot 'config\secrets.local.ps1'
 if (-not (Test-Path $SecretsPath)) {
@@ -44,26 +45,13 @@ if ($GitlabberCloneMethod -notin @('http', 'ssh')) {
     throw 'config\kit.config.ps1: GitlabberCloneMethod must be "http" or "ssh".'
 }
 
-function Expand-Template {
-    param([string]$Path, [string]$OutPath)
-    $content = Get-Content -Raw -Path $Path
-    foreach ($key in $Replacements.Keys) {
-        $content = $content.Replace($key, $Replacements[$key])
-    }
-    if (($Path -like '*user-data*') -and (-not $content.StartsWith('#cloud-config'))) {
-        throw 'Rendered cloud-init must start with #cloud-config'
-    }
-    # utf8NoBOM requires PS 6+; use .NET directly for PS 5.1 compatibility
-    [System.IO.File]::WriteAllText($OutPath, $content, [System.Text.UTF8Encoding]::new($false))
-}
-
 $CloudInitTemplate = Join-Path $RepoRoot 'cloud-init\Ubuntu-DevOps.user-data.template'
 $CloudInitOut      = Join-Path $RenderDir ('{0}.user-data' -f $DistroName)
-Expand-Template -Path $CloudInitTemplate -OutPath $CloudInitOut
+Expand-KitTemplate -Path $CloudInitTemplate -OutPath $CloudInitOut -Replacements $Replacements
 
 $WslConfigTemplate = Join-Path $RepoRoot 'config\wsl.config.template'
 $WslConfigOut      = Join-Path $RenderDir '.wslconfig'
-Expand-Template -Path $WslConfigTemplate -OutPath $WslConfigOut
+Expand-KitTemplate -Path $WslConfigTemplate -OutPath $WslConfigOut -Replacements $Replacements
 
 Write-Host ('Rendered cloud-init : {0}' -f $CloudInitOut)
 Write-Host ('Rendered wslconfig  : {0}' -f $WslConfigOut)
