@@ -10,3 +10,5 @@ $WslSha256Url  = "https://releases.ubuntu.com/26.04/SHA256SUMS"
 $WslMemory     = "8GB"
 $WslProcessors = 4
 $WslSwap       = "4GB"
+# gitlabber clone transport: "http" = HTTPS clone URLs; "ssh" = git@ clone URLs
+$GitlabberCloneMethod = "http"

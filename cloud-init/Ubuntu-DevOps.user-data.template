@@ -63,12 +63,18 @@ write_files:
         "/home/$U/.cache/tofu/plugins" "/home/$U/.ssh"
       chmod 700 "/home/$U/.ssh"
 
+      # snap checks $PATH for /snap/bin before each install; set it now (not only in .bashrc).
+      export PATH="/snap/bin:$PATH"
+
       # ── Snap tools: aws, opentofu, kubectl, helm, glab ─────────────────────
       snap install aws-cli --classic || true
       snap install opentofu --classic || true
       snap install kubectl --classic || true
       snap install helm --classic || true
-      snap install glab --classic || true
+      snap install glab || true
+
+      # ── gitlabber (pipx; GITLABBER_CLONE_METHOD=http uses HTTPS clone URLs) ─
+      sudo -u "$U" pipx install "gitlabber=={{GITLABBER_VERSION}}" || true
 
       # ── asdf (standalone binary - not available in snap) ───────────────────
       ASDF_VER="0.19.0"
@@ -86,12 +92,12 @@ write_files:
       export PATH="/snap/bin:$PATH"
       SNAPPATH
 
-      # ── oh-my-zsh ────────────────────────────────────────────────────────────
-      # CHSH=no / RUNZSH=no: we set the shell ourselves, skip auto-launch.
-      # Pipe 'y' to auto-answer the overwrite prompt
-      echo "y" | sudo -u "$U" env HOME="/home/$U" CHSH=no RUNZSH=no \
-        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-      usermod -s /bin/zsh "$U"
+      # # ── oh-my-zsh ────────────────────────────────────────────────────────────
+      # # CHSH=no / RUNZSH=no: we set the shell ourselves, skip auto-launch.
+      # # echo y: auto-answer overwrite prompt when .zshrc already exists.
+      # echo "y" | sudo -u "$U" env HOME="/home/$U" CHSH=no RUNZSH=no \
+      #   sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+      # usermod -s /bin/zsh "$U"
 
       # ── OpenTofu plugin cache ────────────────────────────────────────────────
       sudo -u "$U" tee "/home/$U/.tofurc" >/dev/null <<'TOFURC'
@@ -103,6 +109,7 @@ write_files:
 
       export EDITOR=vim
       export PROJECTS=~/projects
+      export GITLABBER_CLONE_METHOD="{{GITLABBER_CLONE_METHOD}}"
       cd ~/projects 2>/dev/null || true
       alias clip='clip.exe'
       alias explorer='explorer.exe'
@@ -114,6 +121,7 @@ write_files:
 
       export EDITOR=vim
       export PROJECTS=~/projects
+      export GITLABBER_CLONE_METHOD="{{GITLABBER_CLONE_METHOD}}"
       cd ~/projects 2>/dev/null || true
       alias clip='clip.exe'
       alias explorer='explorer.exe'
@@ -126,7 +134,7 @@ write_files:
       sudo -u "$U" git config --global pull.rebase false
       sudo -u "$U" git config --global user.name "{{GIT_USER_NAME}}"
       sudo -u "$U" git config --global user.email "{{GIT_USER_EMAIL}}"
-      sudo -u "$U" git config --global credential.helper "/mnt/c/Program Files/Git/mingw64/bin/git-credential-manager.exe"
+      sudo -u "$U" git config --global credential.helper "/mnt/c/Program\ Files/Git/mingw64/libexec/git-core/git-credential-wincred.exe"
 
       # ── SSH key ──────────────────────────────────────────────────────────────
       if [ ! -f "/home/$U/.ssh/id_ed25519" ]; then
@@ -135,4 +143,4 @@ write_files:
 
       # ── cleanup ──────────────────────────────────────────────────────────────
       apt-get autoremove -y
-      dpkg-reconfigure -f noninteractive unattended-upgrades >/dev/null 2>&1 || true
+      dpkg-reconfigure -f noninteractive unattended-upgrades

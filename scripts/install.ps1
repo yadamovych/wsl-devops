@@ -117,8 +117,7 @@ $ErrorActionPreference = 'Stop'
 Write-Host ''
 Write-Host 'Running bootstrap script (5-10 min) ...'
 $ErrorActionPreference = 'Continue'
-# Suppress snap PATH warnings by filtering stderr
-wsl -d $DistroName -u root -- bash /opt/bootstrap-devops.sh 2>&1 | Where-Object { $_ -notmatch 'not found in your \$PATH' }
+wsl -d $DistroName -u root -- bash /opt/bootstrap-devops.sh 2>&1
 $bootstrapExitCode = $LASTEXITCODE
 $ErrorActionPreference = 'Stop'
 

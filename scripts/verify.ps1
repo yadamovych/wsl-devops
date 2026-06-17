@@ -23,6 +23,7 @@ $checks = @(
     'helm version --short 2>/dev/null || true'
     'asdf version'
     'glab --version'
+    'gitlabber --version'
     'zsh --version'
     'git --version'
     'jq --version'

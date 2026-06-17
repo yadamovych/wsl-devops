@@ -5,7 +5,7 @@ swap={{WSL_SWAP}}
 
 [experimental]
 autoMemoryReclaim=gradual
-networkingMode=mirrored
+networkingMode=nat
 dnsTunneling=true
 # sparseVhd=true is disabled in some WSL builds due to data-corruption risk;
 # enable manually once your WSL version supports it:

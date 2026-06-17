@@ -34,8 +34,14 @@ $Replacements = @{
     '{{WSL_SWAP}}'          = $WslSwap
     # --- tool versions (from tool-versions.ps1) ---
     '{{ASDF_VERSION}}'      = $AsdfVersion
-    '{{GLAB_VERSION}}'      = $GlabVersion
-    '{{KUBECTL_CHANNEL}}'   = $KubectlChannel
+    '{{GLAB_VERSION}}'              = $GlabVersion
+    '{{GITLABBER_VERSION}}'         = $GitlabberVersion
+    '{{GITLABBER_CLONE_METHOD}}'    = $GitlabberCloneMethod
+    '{{KUBECTL_CHANNEL}}'           = $KubectlChannel
+}
+
+if ($GitlabberCloneMethod -notin @('http', 'ssh')) {
+    throw 'config\kit.config.ps1: GitlabberCloneMethod must be "http" or "ssh".'
 }
 
 function Expand-Template {
