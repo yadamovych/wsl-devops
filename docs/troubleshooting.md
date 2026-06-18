@@ -39,6 +39,24 @@ Windows 11), so a fresh `.wslconfig` does not trigger the warning. If you want i
 add `dnsTunneling=true` under `[wsl2]` in `config/wsl.config.template`, re-deploy, then
 `wsl --shutdown`.
 
+## Install to a different drive (not C:)
+
+By default WSL stores the distro's `ext4.vhdx` under `%LOCALAPPDATA%` on `C:`. To install
+elsewhere, set `$WslInstallLocation` in `config/kit.config.ps1` before running `install.ps1`:
+
+```powershell
+# config/kit.config.ps1
+$WslInstallLocation = "D:\WSL\Ubuntu-DevOps"
+```
+
+`install.ps1` creates the folder and passes `wsl --install --location`. Requires **WSL 2.4.4+**
+(`wsl --version` to check). `--from-file` is kept so cloud-init still provisions on first boot.
+
+To move an **existing** distro instead: `wsl --export`, `wsl --unregister`, then
+`wsl --import <name> D:\WSL\<name> <file>.tar` (note: import-based distros do not re-run cloud-init).
+A global default for future installs can also be set in `%UserProfile%\.wslconfig` under
+`[general]` with `distributionInstallPath=D:\WSL`.
+
 ## Slow file operations
 
 Keep projects under `~/projects` in the Linux filesystem. Avoid `/mnt/c/` for active development.

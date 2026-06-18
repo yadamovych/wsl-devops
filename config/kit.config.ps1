@@ -10,5 +10,9 @@ $WslSha256Url  = "https://releases.ubuntu.com/26.04/SHA256SUMS"
 $WslMemory     = "8GB"
 $WslProcessors = 4
 $WslSwap       = "4GB"
+# Optional: install the distro's VHDX to a custom folder/drive instead of the default
+# location on C:. Leave empty ("") to use the default. Example: "D:\WSL\Ubuntu-DevOps".
+# Requires WSL 2.4.4+ (passes 'wsl --install --location'); the folder is created if missing.
+$WslInstallLocation = ""
 # gitlabber clone transport: "http" = HTTPS clone URLs; "ssh" = git@ clone URLs
 $GitlabberCloneMethod = "http"

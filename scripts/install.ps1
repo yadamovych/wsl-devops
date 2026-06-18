@@ -53,8 +53,17 @@ if ($existing -contains $DistroName) {
     exit 1
 }
 
-Write-Host ('Installing {0} from .wsl bundle with --no-launch ...' -f $DistroName)
-wsl --install --from-file $WslImagePath --name $DistroName --no-launch
+$installArgs = @('--install', '--from-file', $WslImagePath, '--name', $DistroName, '--no-launch')
+if ($WslInstallLocation) {
+    # Install the distro VHDX to a custom folder/drive instead of the default on C:.
+    # Requires WSL 2.4.4+. Keep --from-file so cloud-init still runs on first boot.
+    New-Item -ItemType Directory -Force -Path $WslInstallLocation | Out-Null
+    $installArgs += @('--location', $WslInstallLocation)
+    Write-Host ('Installing {0} to {1} (--no-launch) ...' -f $DistroName, $WslInstallLocation)
+} else {
+    Write-Host ('Installing {0} from .wsl bundle with --no-launch ...' -f $DistroName)
+}
+wsl @installArgs
 
 wsl --set-default $DistroName
 
