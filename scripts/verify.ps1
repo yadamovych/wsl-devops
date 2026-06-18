@@ -27,6 +27,7 @@ $checks = @(
     'docker --version'
     'docker compose version 2>/dev/null || true'
     'zsh --version'
+    'cat ~/.oh-my-zsh/.kit-pin 2>/dev/null || echo oh-my-zsh:kit-pin-missing'
     'git --version'
     'jq --version'
 )

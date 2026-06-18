@@ -19,8 +19,12 @@
 #   helm     : https://github.com/helm/helm/releases
 #   kubectl  : https://snapcraft.io/kubectl  (snap minor track, e.g. 1.35 → 1.35/stable)
 #   opentofu : https://github.com/opentofu/opentofu/releases
+#   oh-my-zsh: no upstream tags — pin $OhMyZshPin (kit label) + $OhMyZshCommit (immutable SHA).
+#              https://github.com/ohmyzsh/ohmyzsh/commits/master
 
 $AsdfVersion        = '0.19.0'
+$OhMyZshPin         = '2026.06.15'
+$OhMyZshCommit      = 'df34d2b8d575777465aed8ae9b7cd90d63fdcd6e'
 $AwsCliVersion      = '2.35.7'
 $GlabVersion        = '1.103.0'
 $GitlabberVersion   = '2.1.1'

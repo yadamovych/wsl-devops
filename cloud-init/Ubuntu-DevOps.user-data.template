@@ -42,6 +42,13 @@ write_files:
     content: |
 {{INSTALL_WSL_EDITORS_SCRIPT}}
 
+  - path: /opt/install-oh-my-zsh.sh
+    permissions: '0755'
+    content: |
+{{INSTALL_OH_MY_ZSH_SCRIPT}}
+
+{{KIT_ZSH_CUSTOM_WRITE_FILES}}
+
   - path: /opt/bootstrap-devops.sh
     permissions: '0755'
     content: |
@@ -140,16 +147,12 @@ write_files:
       sudo -u "$U" tee -a "/home/$U/.bashrc" >/dev/null <<'SNAPPATH'
       export PATH="$HOME/.local/bin:/snap/bin:$PATH"
       SNAPPATH
-      sudo -u "$U" tee -a "/home/$U/.zshrc" >/dev/null <<'SNAPPATH'
-      export PATH="$HOME/.local/bin:/snap/bin:$PATH"
-      SNAPPATH
 
-      # # -- oh-my-zsh ------------------------------------------------------------
-      # # CHSH=no / RUNZSH=no: we set the shell ourselves, skip auto-launch.
-      # # echo y: auto-answer overwrite prompt when .zshrc already exists.
-      # echo "y" | sudo -u "$U" env HOME="/home/$U" CHSH=no RUNZSH=no \
-      #   sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-      # usermod -s /bin/zsh "$U"
+      # -- oh-my-zsh (pinned git ref; kit script — no upstream install.sh) ------
+      OH_MY_ZSH_PIN="{{OH_MY_ZSH_PIN}}" OH_MY_ZSH_COMMIT="{{OH_MY_ZSH_COMMIT}}" \
+        KIT_ZSH_CUSTOM_DIR=/opt/kit-oh-my-zsh-custom \
+        GITLABBER_CLONE_METHOD="{{GITLABBER_CLONE_METHOD}}" \
+        bash /opt/install-oh-my-zsh.sh "$U"
 
       # -- OpenTofu plugin cache ------------------------------------------------
       sudo -u "$U" tee "/home/$U/.tofurc" >/dev/null <<'TOFURC'
@@ -167,18 +170,6 @@ write_files:
       alias explorer='explorer.exe'
       eval "$(direnv hook bash)"
       BASHRC
-
-      # -- zsh additions (.zshrc, appended after oh-my-zsh template) -----------
-      sudo -u "$U" tee -a "/home/$U/.zshrc" >/dev/null <<'ZSHRC'
-
-      export EDITOR=vim
-      export PROJECTS=~/projects
-      export GITLABBER_CLONE_METHOD="{{GITLABBER_CLONE_METHOD}}"
-      cd ~/projects 2>/dev/null || true
-      alias clip='clip.exe'
-      alias explorer='explorer.exe'
-      eval "$(direnv hook zsh)"
-      ZSHRC
 
       # -- VS Code / Cursor CLI (WSL → Windows; appendWindowsPath=false safe) --
       bash /opt/install-wsl-editors.sh "$U"

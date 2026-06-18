@@ -47,6 +47,7 @@ echo "  helm      -> ${HELM_VERSION}"
 echo "  glab      -> ${GLAB_VERSION}"
 echo "  asdf      -> ${ASDF_VERSION}"
 echo "  gitlabber -> ${GITLABBER_VERSION}"
+echo "  oh-my-zsh -> pin ${OH_MY_ZSH_PIN} @ ${OH_MY_ZSH_COMMIT:0:12}"
 echo ""
 
 # -- Snap tools (channel-pinned) ---------------------------------------------
@@ -106,6 +107,17 @@ sudo -u "${LINUX_USERNAME}" env \
   PIP_NO_INPUT=1 NO_COLOR=1 FORCE_COLOR=0 \
   pipx install --force "gitlabber==${GITLABBER_VERSION}"
 
+# -- oh-my-zsh (pinned commit tarball) ---------------------------------------
+echo ">> oh-my-zsh pin ${OH_MY_ZSH_PIN} @ ${OH_MY_ZSH_COMMIT:0:12}"
+sed 's/\r$//' "${REPO_ROOT}/scripts/install-oh-my-zsh.sh" | \
+  OH_MY_ZSH_PIN="${OH_MY_ZSH_PIN}" OH_MY_ZSH_COMMIT="${OH_MY_ZSH_COMMIT}" \
+  KIT_REPO_ROOT="${REPO_ROOT}" KIT_ZSH_CUSTOM_DIR="${REPO_ROOT}/scripts/kit-oh-my-zsh-custom" \
+  GITLABBER_CLONE_METHOD="${GITLABBER_CLONE_METHOD:-http}" \
+  bash -s -- "${LINUX_USERNAME}"
+
+# -- VS Code / Cursor CLI wrappers ---------------------------------------------
+sed 's/\r$//' "${REPO_ROOT}/scripts/install-wsl-editors.sh" | bash -s -- "${LINUX_USERNAME}"
+
 echo ""
 echo "=== Installed versions ==="
 aws --version 2>&1 | head -1 || true
@@ -117,6 +129,3 @@ asdf version 2>/dev/null | head -1 || true
 sudo -u "${LINUX_USERNAME}" gitlabber --version 2>/dev/null | head -1 || true
 echo ""
 echo "=== Done. Run scripts/verify.ps1 for a full check. ==="
-
-# -- VS Code / Cursor CLI wrappers ---------------------------------------------
-bash "${REPO_ROOT}/scripts/install-wsl-editors.sh" "${LINUX_USERNAME}"

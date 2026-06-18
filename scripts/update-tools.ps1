@@ -18,7 +18,7 @@ if ($distros -notcontains $DistroName) {
 
 $envFile = Join-Path $RepoRoot '.cloud-init-rendered\tool-versions.env'
 Write-Host 'Pinned versions:' -ForegroundColor DarkGray
-Get-Content $envFile | Where-Object { $_ -match "^(ASDF|AWS_CLI|GLAB|GITLABBER|HELM|KUBECTL|OPENTOFU)_" } | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray }
+Get-Content $envFile | Where-Object { $_ -match "^(ASDF|AWS_CLI|GLAB|GITLABBER|HELM|KUBECTL|OPENTOFU|OH_MY_ZSH)_" } | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray }
 Write-Host ''
 
 function ConvertTo-WslPath {

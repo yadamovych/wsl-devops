@@ -76,6 +76,23 @@ function Get-PypiLatestVersion {
     return [string]$data.info.version
 }
 
+function Get-GitHubBranchHeadSha {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][string]$Owner,
+        [Parameter(Mandatory)][string]$Repo,
+        [string]$Branch = 'master'
+    )
+
+    $uri = "https://api.github.com/repos/$Owner/$Repo/commits/$Branch"
+    $headers = @{
+        'User-Agent' = 'wsl-devops-kit'
+        Accept       = 'application/vnd.github+json'
+    }
+    $commit = Invoke-RestMethod -Uri $uri -Headers $headers
+    return [string]$commit.sha
+}
+
 function Get-SnapInfo {
     [CmdletBinding()]
     param([Parameter(Mandatory)][string]$SnapName)
@@ -140,6 +157,7 @@ Export-ModuleMember -Function @(
     'Normalize-VersionString'
     'Compare-PinnedVersion'
     'Get-GitHubLatestReleaseTag'
+    'Get-GitHubBranchHeadSha'
     'Get-GitLabLatestReleaseTag'
     'Get-PypiLatestVersion'
     'Get-SnapInfo'

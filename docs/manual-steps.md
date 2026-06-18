@@ -52,8 +52,9 @@ Clone an entire group **with subgroups** into `~/projects`. Use a GitLab persona
 with `read_api` and `read_repository` scopes.
 
 ```bash
-# Optional: set token for this shell (not saved in shell history if you use read -s)
-read -rsp "GitLab token: " GITLAB_TOKEN
+# Optional: set token for this shell (works in zsh and bash; -s hides input)
+printf 'GitLab token: '
+read -s GITLAB_TOKEN
 echo
 export GITLAB_TOKEN
 
@@ -104,5 +105,33 @@ sudo bash /mnt/c/Users/<you>/Projects/wsl-devops/scripts/install-wsl-editors.sh 
 ```
 
 Or from Windows: `.\scripts\update-tools.ps1` (installs wrappers after refreshing tools).
+
+## Shell (oh-my-zsh)
+
+Fresh installs get **oh-my-zsh** from a **pinned GitHub tarball** at an immutable commit SHA — not `master`, not upstream `install.sh`. oh-my-zsh publishes **no semver tags**; the kit uses:
+
+- **`$OhMyZshPin`** — kit label for changelogs (e.g. `2026.06.15`)
+- **`$OhMyZshCommit`** — full 40-char SHA you choose after reviewing upstream
+
+If upstream `master` moves or is compromised, your distro stays on the pinned commit until **you** bump `$OhMyZshCommit` in `config/tool-versions.ps1`.
+
+Default shell is **zsh** with theme `robbyrussell`, plugins `git aws docker kubectl helm`, and kit aliases from `scripts/kit-oh-my-zsh-custom/` (ported from your `linux-dev-env` project; ZEB-internal paths omitted).
+
+Useful aliases: `pwsh`, `k` (kubectl), `cdprojects`, `cdwsldevops` / `cdlinuxdevenv`, `git-get-large-files`, `update`.
+
+On an **existing** distro:
+
+```bash
+sudo env OH_MY_ZSH_PIN=2026.06.15 \
+  OH_MY_ZSH_COMMIT=df34d2b8d575777465aed8ae9b7cd90d63fdcd6e \
+  GITLABBER_CLONE_METHOD=http \
+  bash /mnt/c/Users/<you>/Projects/wsl-devops/scripts/install-oh-my-zsh.sh devops
+```
+
+(Use current values from `config/tool-versions.ps1`.)
+
+Or from Windows: `.\scripts\update-tools.ps1`.
+
+To bump: review a commit on [ohmyzsh/ohmyzsh](https://github.com/ohmyzsh/ohmyzsh/commits/master), set `$OhMyZshPin` + `$OhMyZshCommit`, run `.\scripts\check-tool-updates.ps1`, then `.\scripts\update-tools.ps1`.
 
 Recommended extensions: Remote - WSL, Docker, HCL/Terraform syntax, YAML, AWS Toolkit.

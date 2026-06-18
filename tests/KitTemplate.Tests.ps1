@@ -118,6 +118,16 @@ $SshKeyComment = "test@example.com"
     It 'embeds the WSL editor installer for code/cursor wrappers' {
         $script:cloudInit | Should -Match 'path: /opt/install-wsl-editors\.sh'
     }
+    It 'embeds the oh-my-zsh installer (pinned commit tarball, no install.sh)' {
+        $script:cloudInit | Should -Match 'path: /opt/install-oh-my-zsh\.sh'
+        $script:cloudInit | Should -Match 'OH_MY_ZSH_COMMIT="df34d2b8d575777465aed8ae9b7cd90d63fdcd6e"'
+        $script:cloudInit | Should -Match 'OH_MY_ZSH_PIN="2026\.06\.15"'
+        $script:cloudInit | Should -Not -Match 'ohmyzsh/master/tools/install\.sh'
+    }
+    It 'embeds kit zsh custom aliases under /opt/kit-oh-my-zsh-custom' {
+        $script:cloudInit | Should -Match 'path: /opt/kit-oh-my-zsh-custom/01-kit-aliases\.zsh'
+        $script:cloudInit | Should -Match "alias k='kubectl'"
+    }
     It 'substitutes identity and pinned tool versions from tool-versions.ps1' {
         $script:cloudInit | Should -Match 'name: devops'
         $script:cloudInit | Should -Match 'gitlabber==2\.1\.1'

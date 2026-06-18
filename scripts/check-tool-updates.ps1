@@ -152,6 +152,22 @@ catch {
     $results.Add([pscustomobject]@{ Tool = 'aws-cli'; Pinned = $AwsCliVersion; Upstream = '?'; Status = 'error'; Notes = $_.Exception.Message })
 }
 
+try {
+    $omzLatest = Get-GitHubBranchHeadSha -Owner 'ohmyzsh' -Repo 'ohmyzsh' -Branch 'master'
+    $status = if ($OhMyZshCommit -eq $omzLatest) { 'current' } else { 'update available' }
+    if ($status -eq 'update available') { $script:updatesAvailable = $true }
+    $results.Add([pscustomobject]@{
+            Tool     = 'oh-my-zsh'
+            Pinned   = "$OhMyZshPin @ $($OhMyZshCommit.Substring(0, 12))"
+            Upstream = $omzLatest.Substring(0, 12)
+            Status   = $status
+            Notes    = 'kit pin label + immutable commit; tarball install (not master branch)'
+        })
+}
+catch {
+    $results.Add([pscustomobject]@{ Tool = 'oh-my-zsh'; Pinned = $OhMyZshPin; Upstream = '?'; Status = 'error'; Notes = $_.Exception.Message })
+}
+
 $results | Format-Table -AutoSize Tool, Pinned, Upstream, Status, Notes
 
 $actionable = @($results | Where-Object { $_.Status -in @('update available', 'newer track available') })
