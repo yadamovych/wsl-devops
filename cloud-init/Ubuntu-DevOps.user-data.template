@@ -66,12 +66,35 @@ write_files:
       # snap checks $PATH for /snap/bin before each install; set it now (not only in .bashrc).
       export PATH="/snap/bin:$PATH"
 
-      # -- Snap tools: aws, opentofu, kubectl, helm, glab ---------------------
-      snap install aws-cli --classic || true
-      snap install opentofu --classic || true
-      snap install kubectl --classic || true
-      snap install helm --classic || true
-      snap install glab || true
+      # -- Snap tools (channel-pinned via config/tool-versions.ps1) -----------
+      snap install kubectl --classic --channel={{KUBECTL_CHANNEL}}/stable || true
+
+      # -- Binary tools (version-pinned via config/tool-versions.ps1) ---------
+      AWS_VER="{{AWS_CLI_VERSION}}"
+      curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-${AWS_VER}.zip" -o /tmp/awscliv2.zip
+      unzip -q -o /tmp/awscliv2.zip -d /tmp
+      /tmp/aws/install --update
+      rm -rf /tmp/awscliv2.zip /tmp/aws
+
+      OTF_VER="{{OPENTOFU_VERSION}}"
+      curl -fsSL "https://github.com/opentofu/opentofu/releases/download/v${OTF_VER}/tofu_${OTF_VER}_linux_amd64.tar.gz" \
+        -o /tmp/tofu.tar.gz
+      tar -xzf /tmp/tofu.tar.gz -C /usr/local/bin tofu
+      chmod +x /usr/local/bin/tofu
+      rm /tmp/tofu.tar.gz
+
+      HELM_VER="{{HELM_VERSION}}"
+      curl -fsSL "https://get.helm.sh/helm-v${HELM_VER}-linux-amd64.tar.gz" -o /tmp/helm.tar.gz
+      tar -xzf /tmp/helm.tar.gz -C /tmp linux-amd64/helm
+      install -m 0755 /tmp/linux-amd64/helm /usr/local/bin/helm
+      rm -rf /tmp/helm.tar.gz /tmp/linux-amd64
+
+      GLAB_VER="{{GLAB_VERSION}}"
+      curl -fsSL "https://gitlab.com/gitlab-org/cli/-/releases/v${GLAB_VER}/downloads/glab_${GLAB_VER}_linux_amd64.tar.gz" \
+        -o /tmp/glab.tar.gz
+      tar -xzf /tmp/glab.tar.gz -C /tmp
+      install -m 0755 /tmp/bin/glab /usr/local/bin/glab
+      rm -rf /tmp/glab.tar.gz /tmp/bin
 
       # -- Docker CLI (client only - use Docker Desktop daemon via WSL integration) -
       install -m 0755 -d /etc/apt/keyrings
@@ -101,7 +124,7 @@ write_files:
         >/dev/null 2>&1 || true
 
       # -- asdf (standalone binary - not available in snap) -------------------
-      ASDF_VER="0.19.0"
+      ASDF_VER="{{ASDF_VERSION}}"
       curl -fsSL "https://github.com/asdf-vm/asdf/releases/download/v${ASDF_VER}/asdf-v${ASDF_VER}-linux-amd64.tar.gz" \
         -o /tmp/asdf.tar.gz
       tar -xzf /tmp/asdf.tar.gz -C /usr/local/bin asdf

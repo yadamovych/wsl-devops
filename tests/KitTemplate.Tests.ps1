@@ -93,6 +93,7 @@ $SshKeyComment = "test@example.com"
         $renderDir = Join-Path $script:RepoRoot '.cloud-init-rendered'
         $script:cloudInit = Get-Content -Raw (Join-Path $renderDir 'Ubuntu-DevOps.user-data')
         $script:wslConfig = Get-Content -Raw (Join-Path $renderDir '.wslconfig')
+        $script:toolEnv   = Get-Content -Raw (Join-Path $renderDir 'tool-versions.env')
     }
     AfterAll {
         if ($script:backedUp) {
@@ -109,9 +110,20 @@ $SshKeyComment = "test@example.com"
     It 'renders cloud-init starting with #cloud-config' {
         $script:cloudInit.StartsWith('#cloud-config') | Should -BeTrue
     }
-    It 'substitutes identity and the pinned tool version' {
+    It 'writes tool-versions.env for update-tools.sh' {
+        $script:toolEnv | Should -Match "LINUX_USERNAME='devops'"
+        $script:toolEnv | Should -Match "ASDF_VERSION='0\.19\.0'"
+        $script:toolEnv | Should -Match "KUBECTL_CHANNEL='1\.35'"
+    }
+    It 'substitutes identity and pinned tool versions from tool-versions.ps1' {
         $script:cloudInit | Should -Match 'name: devops'
         $script:cloudInit | Should -Match 'gitlabber==2\.1\.1'
+        $script:cloudInit | Should -Match 'ASDF_VER="0\.19\.0"'
+        $script:cloudInit | Should -Match 'awscli-exe-linux-x86_64-2\.35\.7\.zip'
+        $script:cloudInit | Should -Match 'snap install kubectl --classic --channel=1\.35/stable'
+        $script:cloudInit | Should -Match 'tofu_1\.12\.2_linux_amd64\.tar\.gz'
+        $script:cloudInit | Should -Match 'helm-v4\.2\.2-linux-amd64\.tar\.gz'
+        $script:cloudInit | Should -Match 'glab_1\.103\.0_linux_amd64\.tar\.gz'
     }
     It 'substitutes the WSL memory in .wslconfig' {
         $script:wslConfig | Should -Match 'memory=8GB'

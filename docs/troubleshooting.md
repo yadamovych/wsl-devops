@@ -85,15 +85,38 @@ git pull
 
 ## Upgrading a pinned tool version
 
-Edit `config/tool-versions.ps1`, bump the version, commit, push, then reprovision:
+Edit `config/tool-versions.ps1`, bump the version, commit, then apply the change.
+
+### In-place update (recommended)
+
+Refreshes only the kit CLI tools inside your existing distro (~1–2 minutes).
+Keeps your home directory, SSH keys, and project checkouts.
 
 ```powershell
 # 1. Edit config\tool-versions.ps1 — e.g. $AsdfVersion = '0.20.0'
-# 2. Commit and push
+# 2. Commit and push (optional but keeps the repo in sync)
 git add config\tool-versions.ps1
 git commit -m "chore: bump asdf to 0.20.0"
 git push
-# 3. Reprovision
+# 3. Render + run the WSL update script
+.\scripts\update-tools.ps1
+```
+
+`update-tools.ps1` calls `render-templates.ps1` (writes `.cloud-init-rendered/tool-versions.env`)
+then runs `scripts/update-tools.sh` inside WSL with `sudo`.
+
+You can also run the shell script directly inside WSL after rendering:
+
+```bash
+sudo bash ~/projects/wsl-devops/scripts/update-tools.sh
+```
+
+### Full reprovision (nuclear option)
+
+Rebuilds the distro from the official `.wsl` image. Use when cloud-init itself changed
+or the distro is broken.
+
+```powershell
 .\scripts\uninstall.ps1
 .\scripts\install.ps1
 ```
