@@ -37,6 +37,11 @@ write_files:
       enabled=true
       appendWindowsPath=false
 
+  - path: /opt/install-wsl-editors.sh
+    permissions: '0755'
+    content: |
+{{INSTALL_WSL_EDITORS_SCRIPT}}
+
   - path: /opt/bootstrap-devops.sh
     permissions: '0755'
     content: |
@@ -174,6 +179,9 @@ write_files:
       alias explorer='explorer.exe'
       eval "$(direnv hook zsh)"
       ZSHRC
+
+      # -- VS Code / Cursor CLI (WSL → Windows; appendWindowsPath=false safe) --
+      bash /opt/install-wsl-editors.sh "$U"
 
       # -- git global config ----------------------------------------------------
       sudo -u "$U" git config --global init.defaultBranch main

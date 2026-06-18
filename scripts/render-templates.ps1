@@ -63,6 +63,14 @@ Patch versions are applied automatically on that track. Run .\scripts\check-tool
 "@
 }
 
+$editorScriptPath = Join-Path $RepoRoot 'scripts\install-wsl-editors.sh'
+$editorYamlIndent = ' ' * 6
+$editorScriptYaml = (
+    (Get-Content -LiteralPath $editorScriptPath -Raw).TrimEnd().Split("`n") |
+    ForEach-Object { $editorYamlIndent + $_ }
+) -join "`n"
+$Replacements['{{INSTALL_WSL_EDITORS_SCRIPT}}'] = $editorScriptYaml
+
 $CloudInitTemplate = Join-Path $RepoRoot 'cloud-init\Ubuntu-DevOps.user-data.template'
 $CloudInitOut      = Join-Path $RenderDir ('{0}.user-data' -f $DistroName)
 Expand-KitTemplate -Path $CloudInitTemplate -OutPath $CloudInitOut -Replacements $Replacements

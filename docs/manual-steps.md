@@ -80,10 +80,29 @@ token already saved in a remote URL:
 git -C path/to/repo remote set-url origin "$(git -C path/to/repo remote get-url origin | sed -E 's#https://[^@]+@#https://#')"
 ```
 
-## VS Code
+## VS Code / Cursor (from WSL)
+
+The kit installs `code` and `cursor` in `~/.local/bin`. They launch the **Windows** editor
+for the current WSL folder (works with `appendWindowsPath=false`).
+
+**Windows host prerequisites:**
+
+- [VS Code](https://code.visualstudio.com/) + **Remote - WSL** extension, or
+- [Cursor](https://cursor.com/) + Remote WSL support  
+- In Cursor: `Ctrl+Shift+P` → **Shell Command: Install 'cursor' command in PATH**
 
 ```bash
-code ~/projects
+cd ~/projects/your-repo
+code .      # VS Code
+cursor .    # Cursor
 ```
+
+On an **existing** distro (before reprovision), install the wrappers with:
+
+```bash
+sudo bash /mnt/c/Users/<you>/Projects/wsl-devops/scripts/install-wsl-editors.sh devops
+```
+
+Or from Windows: `.\scripts\update-tools.ps1` (installs wrappers after refreshing tools).
 
 Recommended extensions: Remote - WSL, Docker, HCL/Terraform syntax, YAML, AWS Toolkit.

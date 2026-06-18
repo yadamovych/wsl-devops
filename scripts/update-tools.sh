@@ -117,3 +117,6 @@ asdf version 2>/dev/null | head -1 || true
 sudo -u "${LINUX_USERNAME}" gitlabber --version 2>/dev/null | head -1 || true
 echo ""
 echo "=== Done. Run scripts/verify.ps1 for a full check. ==="
+
+# -- VS Code / Cursor CLI wrappers ---------------------------------------------
+bash "${REPO_ROOT}/scripts/install-wsl-editors.sh" "${LINUX_USERNAME}"

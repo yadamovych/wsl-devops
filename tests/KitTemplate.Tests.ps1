@@ -115,6 +115,9 @@ $SshKeyComment = "test@example.com"
         $script:toolEnv | Should -Match "ASDF_VERSION='0\.19\.0'"
         $script:toolEnv | Should -Match "KUBECTL_CHANNEL='1\.35'"
     }
+    It 'embeds the WSL editor installer for code/cursor wrappers' {
+        $script:cloudInit | Should -Match 'path: /opt/install-wsl-editors\.sh'
+    }
     It 'substitutes identity and pinned tool versions from tool-versions.ps1' {
         $script:cloudInit | Should -Match 'name: devops'
         $script:cloudInit | Should -Match 'gitlabber==2\.1\.1'
