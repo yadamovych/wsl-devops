@@ -127,3 +127,35 @@ or the distro is broken.
 2. Add `'{{TOOL_VERSION}}' = $ToolVersion` to `$Replacements` in `scripts/render-templates.ps1`
 3. Add a labeled install block to `cloud-init/Ubuntu-DevOps.user-data.template` using `{{TOOL_VERSION}}`
 4. Add a version check to `scripts/verify.ps1`
+
+## Git HTTPS auth fails in WSL
+
+WSL git is configured to use Git for Windows' credential helper
+(`git-credential-wincred.exe`). If `git clone` over HTTPS fails:
+
+1. Install or reinstall [Git for Windows](https://gitforwindows.org/) on the Windows host.
+2. Run `.\scripts\preflight.ps1` — the **Git for Windows (git + WSL credential helper)** check must pass.
+3. Retry `git clone` in WSL; complete the Windows credential prompt on first use.
+
+## gitlabber wrote my token into `.git/config`
+
+Without `-T`, gitlabber embeds the token in each repo's `remote.origin.url`. Fix:
+
+```bash
+# Future clones — always use -T
+gitlabber -T -u https://gitlab.com -i '/your-group/**' ~/projects
+
+# Existing repo — strip token from remote URL (then git pull uses the Windows credential helper)
+git -C path/to/repo remote set-url origin "$(git -C path/to/repo remote get-url origin | sed -E 's#https://[^@]+@#https://#')"
+```
+
+See [manual-steps.md](manual-steps.md#gitlab-group-clone-gitlabber).
+
+## Check for newer tool versions
+
+```powershell
+.\scripts\check-tool-updates.ps1
+```
+
+Compares pins in `config/tool-versions.ps1` to upstream (GitHub, PyPI, snap tracks). Use
+`-FailIfUpdates` to exit non-zero when updates are available (e.g. in CI).

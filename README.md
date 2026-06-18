@@ -46,7 +46,7 @@ git pull
 
 | File | Purpose | Commit? |
 |------|---------|---------|
-| [config/kit.config.ps1](config/kit.config.ps1) | Distro name, timezone, WSL RAM/CPUs/swap | Yes |
+| [config/kit.config.ps1](config/kit.config.ps1) | Distro name, timezone, WSL RAM/CPUs/swap, gitlabber clone method | Yes |
 | [config/tool-versions.ps1](config/tool-versions.ps1) | Pinned tool versions (asdf, aws-cli, glab, gitlabber, helm, kubectl, opentofu) | Yes |
 | [config/wsl.config.template](config/wsl.config.template) | `.wslconfig` template (VM resources, experimental flags) | Yes |
 | [config/secrets.local.ps1.example](config/secrets.local.ps1.example) | Template for `config/secrets.local.ps1` (password, git identity) | Yes |
@@ -55,7 +55,17 @@ git pull
 
 ## Manual steps after install
 
-[docs/manual-steps.md](docs/manual-steps.md)
+[docs/manual-steps.md](docs/manual-steps.md) — AWS SSO, Docker Desktop, SSH keys, **gitlabber** group clone (`-T`).
+
+## Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/install.ps1` | Full install (preflight → cloud-init → WSL distro) |
+| `scripts/verify.ps1` | Smoke-test tools in WSL + print helpful commands |
+| `scripts/update-tools.ps1` | Bump pinned tools in an **existing** distro (no rebuild) |
+| `scripts/check-tool-updates.ps1` | Compare `tool-versions.ps1` pins to upstream releases |
+| `scripts/preflight.ps1` | Prerequisite check only (Git for Windows + credential helper, WSL, secrets, …) |
 
 ## Troubleshooting
 

@@ -34,6 +34,52 @@ cat ~/.ssh/id_ed25519.pub
 
 Add the key to GitHub, GitLab, or AWS as needed.
 
+## Git authentication (WSL → Windows)
+
+Cloud-init configures WSL git to use Git for Windows' credential helper:
+
+`/mnt/c/Program Files/Git/mingw64/libexec/git-core/git-credential-wincred.exe`
+
+That lets `git clone` / `git pull` over HTTPS in WSL prompt through Windows (GitLab, GitHub, etc.).
+**Requires [Git for Windows](https://gitforwindows.org/)** on the host — `preflight.ps1` checks for
+`git` on PATH and `git-credential-wincred.exe`.
+
+After the first HTTPS git operation, sign in when Windows prompts you; credentials are cached.
+
+## GitLab group clone (gitlabber)
+
+Clone an entire group **with subgroups** into `~/projects`. Use a GitLab personal access token
+with `read_api` and `read_repository` scopes.
+
+```bash
+# Optional: set token for this shell (not saved in shell history if you use read -s)
+read -rsp "GitLab token: " GITLAB_TOKEN
+echo
+export GITLAB_TOKEN
+
+# Preview the tree (no clone)
+gitlabber -p -u https://gitlab.com -i '/your-group/**'
+
+# Clone group + subgroups (-T keeps the token out of each repo's .git/config)
+gitlabber -T -u https://gitlab.com -i '/your-group/**' ~/projects
+```
+
+**Always pass `-T` (`--hide-token`)** when using HTTP — without it, gitlabber embeds the token in
+every repo's `remote.origin.url` inside `.git/config`.
+
+Alternatives:
+
+- **SSH clones:** `gitlabber -m ssh ...` or set `$GitlabberCloneMethod = "ssh"` in
+  `config/kit.config.ps1` before install (SSH key must be in GitLab).
+- **Store token once:** `gitlabber --store-token -u https://gitlab.com` (still use `-T` when cloning).
+
+After `git pull` on existing repos, the Windows credential helper above handles auth. To strip a
+token already saved in a remote URL:
+
+```bash
+git -C path/to/repo remote set-url origin "$(git -C path/to/repo remote get-url origin | sed -E 's#https://[^@]+@#https://#')"
+```
+
 ## VS Code
 
 ```bash

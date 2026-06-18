@@ -7,7 +7,7 @@ Use this on a **new Windows PC** before running `scripts\install.ps1`.
 - [ ] Windows 11 or Windows 10 21H2+
 - [ ] Virtualization enabled in BIOS/UEFI
 - [ ] WSL2 updated: `wsl --update` and `wsl --set-default-version 2`
-- [ ] [Git for Windows](https://git-scm.com/download/win) installed
+- [ ] [Git for Windows](https://gitforwindows.org/) installed (includes the credential helper WSL uses for GitLab/GitHub HTTPS)
 - [ ] [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed (WSL2 engine)
 - [ ] [Windows Terminal](https://aka.ms/terminal) installed (recommended)
 

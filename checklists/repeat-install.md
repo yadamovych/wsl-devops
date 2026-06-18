@@ -16,7 +16,19 @@ Run after every `scripts\install.ps1` (new machine or rebuild).
 - [ ] `aws configure sso` (or named profile)
 - [ ] `aws sts get-caller-identity`
 - [ ] `cat ~/.ssh/id_ed25519.pub` → add to GitHub/GitLab
+- [ ] Clone GitLab group (optional): `gitlabber -T -u https://gitlab.com -i '/your-group/**' ~/projects`
+      (see [docs/manual-steps.md](../docs/manual-steps.md#gitlab-group-clone-gitlabber))
 - [ ] `code ~/projects` (VS Code Remote-WSL)
+
+## Tool version bumps (existing distro)
+
+No full rebuild needed — edit `config/tool-versions.ps1`, then:
+
+```powershell
+.\scripts\check-tool-updates.ps1   # optional: see what is upstream
+.\scripts\update-tools.ps1
+.\scripts\verify.ps1
+```
 
 ## Rebuild same machine
 

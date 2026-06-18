@@ -14,5 +14,5 @@ $WslSwap       = "4GB"
 # location on C:. Leave empty ("") to use the default. Example: "D:\WSL\Ubuntu-DevOps".
 # Requires WSL 2.4.4+ (passes 'wsl --install --location'); the folder is created if missing.
 $WslInstallLocation = "D:\WSL\Ubuntu-DevOps"
-# gitlabber clone transport: "http" = HTTPS clone URLs; "ssh" = git@ clone URLs
+# gitlabber clone transport: "http" = HTTPS (+ token); "ssh" = git@ (no token in .git/config; needs SSH key in GitLab)
 $GitlabberCloneMethod = "http"

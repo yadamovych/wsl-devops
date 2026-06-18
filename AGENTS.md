@@ -38,7 +38,8 @@ no long-running service to start. The cloud agent runs on Linux, so keep the fol
 - `scripts/preflight.ps1` runs a fresh-Windows-host prerequisite check and is invoked at the top of
   `install.ps1`. `Get-KitPrerequisite` (in `scripts/KitSecrets.psm1`) checks: PowerShell >= 5.1,
   Windows OS + build >= 19044, hardware virtualization, WSL command, modern WSL2/Store build, Git
-  for Windows, Docker Desktop running (WSL integration), Windows Terminal, and the kit secrets file.
+  for Windows (`git` + `git-credential-wincred.exe` for WSL HTTPS auth), Docker Desktop running
+  (WSL integration), Windows Terminal, and the kit secrets file.
 - Required checks gate install (preflight throws); Docker Desktop / Windows Terminal / WSL2-Store are
   `[WARN]`-only (Docker Desktop integration is a documented post-install manual step).
 - The Windows-specific probes (`Get-KitOsInfo`, `Test-KitVirtualizationEnabled`, `Get-KitWslInfo`,

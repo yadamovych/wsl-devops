@@ -146,6 +146,9 @@ Describe 'Get-KitPrerequisite (mocked Windows host scenarios)' {
         Mock -ModuleName KitSecrets -CommandName Get-KitWslInfo              -MockWith { [pscustomobject]@{ Installed = $true; HasVersionCommand = $true } }
         Mock -ModuleName KitSecrets -CommandName Test-KitDockerReady         -MockWith { $true }
         Mock -ModuleName KitSecrets -CommandName Test-KitCommand             -MockWith { $true }
+        Mock -ModuleName KitSecrets -CommandName Get-KitGitCredentialHelperPath -MockWith {
+            'C:\Program Files\Git\mingw64\libexec\git-core\git-credential-wincred.exe'
+        }
 
         $checks  = Get-KitPrerequisite
         $missing = @($checks | Where-Object { $_.Required -and -not $_.Ok })
@@ -159,6 +162,9 @@ Describe 'Get-KitPrerequisite (mocked Windows host scenarios)' {
         Mock -ModuleName KitSecrets -CommandName Get-KitWslInfo              -MockWith { [pscustomobject]@{ Installed = $true; HasVersionCommand = $true } }
         Mock -ModuleName KitSecrets -CommandName Test-KitDockerReady         -MockWith { $true }
         Mock -ModuleName KitSecrets -CommandName Test-KitCommand             -MockWith { $true }
+        Mock -ModuleName KitSecrets -CommandName Get-KitGitCredentialHelperPath -MockWith {
+            'C:\Program Files\Git\mingw64\libexec\git-core\git-credential-wincred.exe'
+        }
 
         $vt = Get-KitPrerequisite | Where-Object Name -like 'Hardware virtualization*'
         $vt.Required | Should -BeTrue
@@ -172,6 +178,9 @@ Describe 'Get-KitPrerequisite (mocked Windows host scenarios)' {
         Mock -ModuleName KitSecrets -CommandName Test-KitDockerReady         -MockWith { $false }
         Mock -ModuleName KitSecrets -CommandName Test-KitCommand -ParameterFilter { $Name -eq 'git' } -MockWith { $true }
         Mock -ModuleName KitSecrets -CommandName Test-KitCommand -ParameterFilter { $Name -eq 'wt' }  -MockWith { $false }
+        Mock -ModuleName KitSecrets -CommandName Get-KitGitCredentialHelperPath -MockWith {
+            'C:\Program Files\Git\mingw64\libexec\git-core\git-credential-wincred.exe'
+        }
 
         $checks  = Get-KitPrerequisite
         $docker  = $checks | Where-Object Name -like 'Docker*'
@@ -181,6 +190,24 @@ Describe 'Get-KitPrerequisite (mocked Windows host scenarios)' {
         $wt.Required     | Should -BeFalse
         # Docker/WT being absent must not produce a required failure.
         @($checks | Where-Object { $_.Required -and -not $_.Ok }).Count | Should -Be 0
+    }
+
+    It 'fails when git is on PATH but the WSL credential helper is missing' {
+        Mock -ModuleName KitSecrets -CommandName Get-KitOsInfo -MockWith {
+            [pscustomobject]@{ IsWindows = $true; Caption = 'Windows 11 Pro'; Build = 22631 }
+        }
+        Mock -ModuleName KitSecrets -CommandName Test-KitVirtualizationEnabled -MockWith { $true }
+        Mock -ModuleName KitSecrets -CommandName Get-KitWslInfo -MockWith {
+            [pscustomobject]@{ Installed = $true; HasVersionCommand = $true }
+        }
+        Mock -ModuleName KitSecrets -CommandName Test-KitDockerReady -MockWith { $true }
+        Mock -ModuleName KitSecrets -CommandName Test-KitCommand -MockWith { $true }
+        Mock -ModuleName KitSecrets -CommandName Get-KitGitCredentialHelperPath -MockWith { $null }
+
+        $git = Get-KitPrerequisite | Where-Object Name -like 'Git for Windows*'
+        $git.Required | Should -BeTrue
+        $git.Ok       | Should -BeFalse
+        $git.Detail   | Should -Match 'git-credential-wincred'
     }
 
     It 'fails the Windows OS check when not running on Windows' {

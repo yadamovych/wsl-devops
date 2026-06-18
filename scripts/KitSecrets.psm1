@@ -203,6 +203,22 @@ function Test-KitDockerReady {
     } catch { return $false }
 }
 
+function Get-KitGitCredentialHelperPath {
+    # Path used by WSL git (see cloud-init credential.helper). Git for Windows ships this binary.
+    [CmdletBinding()]
+    [OutputType([string])]
+    param()
+
+    $relative = 'Git\mingw64\libexec\git-core\git-credential-wincred.exe'
+    $roots = @($env:ProgramFiles, ${env:ProgramFiles(x86)}) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+
+    foreach ($root in $roots) {
+        $candidate = Join-Path $root $relative
+        if (Test-Path -LiteralPath $candidate) { return $candidate }
+    }
+    return $null
+}
+
 # --- Composed prerequisite report --------------------------------------------
 
 function Get-KitPrerequisite {
@@ -240,9 +256,26 @@ function Get-KitPrerequisite {
     & $add 'WSL (wsl command)' $true $wsl.Installed ($(if ($wsl.Installed) { 'installed' } else { 'not found - run: wsl --install' }))
     & $add 'WSL2 (Store build, `wsl --version`)' $false $wsl.HasVersionCommand ($(if ($wsl.HasVersionCommand) { 'modern WSL detected (systemd-capable)' } else { 'run "wsl --update" / install WSL from the Microsoft Store' }))
 
-    # Git for Windows (credential manager + clones)
-    $git = Test-KitCommand -Name 'git'
-    & $add 'Git for Windows' $true $git ($(if ($git) { 'found' } else { 'not found - install Git for Windows' }))
+    # Git for Windows — git on PATH plus the credential helper WSL is configured to use.
+    if ($os.IsWindows) {
+        $gitCmd = Test-KitCommand -Name 'git'
+        $credHelper = Get-KitGitCredentialHelperPath
+        $gitOk = $gitCmd -and $null -ne $credHelper
+        $gitDetail =
+            if (-not $gitCmd) {
+                'git not on PATH - install Git for Windows from https://gitforwindows.org/'
+            }
+            elseif (-not $credHelper) {
+                'git found but git-credential-wincred.exe is missing - reinstall Git for Windows (WSL uses it for GitLab/GitHub HTTPS auth)'
+            }
+            else {
+                ('git + credential helper at {0}' -f $credHelper)
+            }
+        & $add 'Git for Windows (git + WSL credential helper)' $true $gitOk $gitDetail
+    }
+    else {
+        & $add 'Git for Windows (git + WSL credential helper)' $true $false 'n/a (install on the Windows host before provisioning WSL)'
+    }
 
     # Docker Desktop (manual post-install step, so only a recommendation)
     $docker = Test-KitDockerReady

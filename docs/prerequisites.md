@@ -11,7 +11,7 @@
 | Tool | Purpose |
 |------|---------|
 | WSL2 | Linux environment — `wsl --update` |
-| Git for Windows | Clone repo + credential manager for WSL |
+| Git for Windows | Clone repo on Windows; **`git-credential-wincred.exe`** for WSL HTTPS git (GitLab/GitHub). Install from [gitforwindows.org](https://gitforwindows.org/). `preflight.ps1` verifies both `git` and the helper binary. |
 | Docker Desktop | Containers via WSL integration (do not install docker-ce in WSL) |
 
 ## Recommended
