@@ -118,6 +118,9 @@ sed 's/\r$//' "${REPO_ROOT}/scripts/install-oh-my-zsh.sh" | \
 # -- VS Code / Cursor CLI wrappers ---------------------------------------------
 sed 's/\r$//' "${REPO_ROOT}/scripts/install-wsl-editors.sh" | bash -s -- "${LINUX_USERNAME}"
 
+# -- Windows browser helper (AWS SSO login, etc.) ------------------------------
+sed 's/\r$//' "${REPO_ROOT}/scripts/install-wsl-browser.sh" | bash -s -- "${LINUX_USERNAME}"
+
 echo ""
 echo "=== Installed versions ==="
 aws --version 2>&1 | head -1 || true

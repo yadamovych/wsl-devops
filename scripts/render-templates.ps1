@@ -77,6 +77,13 @@ $editorScriptYaml = (
 ) -join "`n"
 $Replacements['{{INSTALL_WSL_EDITORS_SCRIPT}}'] = $editorScriptYaml
 
+$browserScriptPath = Join-Path $RepoRoot 'scripts\install-wsl-browser.sh'
+$browserScriptYaml = (
+    (Get-Content -LiteralPath $browserScriptPath -Raw).TrimEnd().Split("`n") |
+    ForEach-Object { $editorYamlIndent + $_ }
+) -join "`n"
+$Replacements['{{INSTALL_WSL_BROWSER_SCRIPT}}'] = $browserScriptYaml
+
 $omzScriptPath = Join-Path $RepoRoot 'scripts\install-oh-my-zsh.sh'
 $omzScriptYaml = (
     (Get-Content -LiteralPath $omzScriptPath -Raw).TrimEnd().Split("`n") |

@@ -136,7 +136,7 @@ export EDITOR=vim
 export PROJECTS=~/projects
 export GITLABBER_CLONE_METHOD="${GITLABBER_METHOD}"
 export KIT_REPO="\${HOME}/projects/wsl-devops"
-cd ~/projects 2>/dev/null || true
+export BROWSER="\${HOME}/.local/bin/wsl-browser"
 eval "\$(direnv hook zsh)"
 ZSHRC_EOF
 }

@@ -4,12 +4,22 @@ These steps require interactive login or Windows GUI and are intentionally not i
 
 ## AWS authentication
 
+`aws sso login` opens a URL in your **Windows** browser. The kit sets `BROWSER=~/.local/bin/wsl-browser`
+(wraps `wslview` or `cmd.exe /c start`) because `appendWindowsPath=false` hides Windows tools from WSL PATH.
+
 ```bash
 aws configure sso
 # or
 aws configure --profile dev
 
+aws sso login --profile dev   # or: aws sso login
 aws sts get-caller-identity
+```
+
+If the browser does not open, paste the URL from the terminal manually, or run:
+
+```bash
+~/.local/bin/wsl-browser 'https://example.com'
 ```
 
 ## Docker Desktop

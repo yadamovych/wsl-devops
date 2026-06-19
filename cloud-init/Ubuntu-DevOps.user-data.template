@@ -42,6 +42,11 @@ write_files:
     content: |
 {{INSTALL_WSL_EDITORS_SCRIPT}}
 
+  - path: /opt/install-wsl-browser.sh
+    permissions: '0755'
+    content: |
+{{INSTALL_WSL_BROWSER_SCRIPT}}
+
   - path: /opt/install-oh-my-zsh.sh
     permissions: '0755'
     content: |
@@ -67,7 +72,7 @@ write_files:
         python3 python3-venv python3-pip pipx \
         direnv pass age \
         net-tools dnsutils iputils-ping openssh-client \
-        unattended-upgrades vim zsh snapd
+        unattended-upgrades vim zsh snapd wslu
 
       sudo -u "$U" pipx ensurepath || true
       sudo -u "$U" mkdir -p "/home/$U/projects" "/home/$U/bin" \
@@ -165,7 +170,10 @@ write_files:
       export EDITOR=vim
       export PROJECTS=~/projects
       export GITLABBER_CLONE_METHOD="{{GITLABBER_CLONE_METHOD}}"
-      cd ~/projects 2>/dev/null || true
+      export BROWSER="${HOME}/.local/bin/wsl-browser"
+      if [[ "${TERM_PROGRAM:-}" != "vscode" && -z "${VSCODE_IPC_HOOK_CLI:-}" && "$PWD" == "$HOME" ]]; then
+        cd ~/projects 2>/dev/null || true
+      fi
       alias clip='clip.exe'
       alias explorer='explorer.exe'
       eval "$(direnv hook bash)"
@@ -173,6 +181,7 @@ write_files:
 
       # -- VS Code / Cursor CLI (WSL → Windows; appendWindowsPath=false safe) --
       bash /opt/install-wsl-editors.sh "$U"
+      bash /opt/install-wsl-browser.sh "$U"
 
       # -- git global config ----------------------------------------------------
       sudo -u "$U" git config --global init.defaultBranch main
