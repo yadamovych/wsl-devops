@@ -46,7 +46,7 @@ git pull
 
 | File | Purpose | Commit? |
 |------|---------|---------|
-| [config/kit.config.ps1](config/kit.config.ps1) | Distro name, timezone, WSL RAM/CPUs/swap, gitlabber clone method | Yes |
+| [config/kit.config.ps1](config/kit.config.ps1) | Distro name, timezone, WSL RAM/CPUs/swap, GitLab URL, gitlabber clone method | Yes |
 | [config/tool-versions.ps1](config/tool-versions.ps1) | Pinned tool versions (asdf, aws-cli, glab, gitlabber, helm, kubectl, opentofu) | Yes |
 | [config/wsl.config.template](config/wsl.config.template) | `.wslconfig` template (VM resources, experimental flags) | Yes |
 | [config/secrets.local.ps1.example](config/secrets.local.ps1.example) | Template for `config/secrets.local.ps1` (password, git identity) | Yes |

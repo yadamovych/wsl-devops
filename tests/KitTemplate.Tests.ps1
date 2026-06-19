@@ -128,6 +128,9 @@ $SshKeyComment = "test@example.com"
         $script:cloudInit | Should -Match 'path: /opt/kit-oh-my-zsh-custom/01-kit-aliases\.zsh'
         $script:cloudInit | Should -Match "alias k='kubectl'"
     }
+    It 'exports GITLAB_URL from kit.config.ps1 for gitlabber' {
+        $script:cloudInit | Should -Match 'export GITLAB_URL="https://gitlab\.com"'
+    }
     It 'substitutes identity and pinned tool versions from tool-versions.ps1' {
         $script:cloudInit | Should -Match 'name: devops'
         $script:cloudInit | Should -Match 'gitlabber==2\.1\.1'

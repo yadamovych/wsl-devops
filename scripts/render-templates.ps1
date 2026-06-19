@@ -47,11 +47,16 @@ $Replacements = @{
     '{{GLAB_VERSION}}'              = $GlabVersion
     '{{GITLABBER_VERSION}}'         = $GitlabberVersion
     '{{GITLABBER_CLONE_METHOD}}'    = $GitlabberCloneMethod
+    '{{GITLAB_URL}}'                = $GitLabUrl.TrimEnd('/')
     '{{HELM_VERSION}}'              = $HelmVersion
     '{{KUBECTL_CHANNEL}}'           = $KubectlChannel
     '{{OPENTOFU_VERSION}}'          = $OpenTofuVersion
     '{{OH_MY_ZSH_PIN}}'             = $OhMyZshPin
     '{{OH_MY_ZSH_COMMIT}}'          = $OhMyZshCommit
+}
+
+if ($GitLabUrl -notmatch '^https://') {
+    throw 'config\kit.config.ps1: GitLabUrl must start with https:// (no trailing slash).'
 }
 
 if ($GitlabberCloneMethod -notin @('http', 'ssh')) {
@@ -117,6 +122,7 @@ $toolEnvLines = @(
     '# Sourced by scripts/update-tools.sh inside WSL.'
     ('LINUX_USERNAME=''{0}''' -f $LinuxUsername)
     ('GITLABBER_CLONE_METHOD=''{0}''' -f $GitlabberCloneMethod)
+    ('GITLAB_URL=''{0}''' -f $GitLabUrl.TrimEnd('/'))
     ('ASDF_VERSION=''{0}''' -f $AsdfVersion)
     ('AWS_CLI_VERSION=''{0}''' -f $AwsCliVersion)
     ('GLAB_VERSION=''{0}''' -f $GlabVersion)

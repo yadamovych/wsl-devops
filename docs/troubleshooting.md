@@ -143,7 +143,7 @@ Without `-T`, gitlabber embeds the token in each repo's `remote.origin.url`. Fix
 
 ```bash
 # Future clones — always use -T
-gitlabber -T -u https://gitlab.com -i '/your-group/**' ~/projects
+gitlabber -T -u "$GITLAB_URL" -i '/your-group/**' ~/projects
 
 # Existing repo — strip token from remote URL (then git pull uses the Windows credential helper)
 git -C path/to/repo remote set-url origin "$(git -C path/to/repo remote get-url origin | sed -E 's#https://[^@]+@#https://#')"

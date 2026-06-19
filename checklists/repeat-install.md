@@ -16,8 +16,8 @@ Run after every `scripts\install.ps1` (new machine or rebuild).
 - [ ] `aws configure sso` (or named profile)
 - [ ] `aws sts get-caller-identity`
 - [ ] `cat ~/.ssh/id_ed25519.pub` → add to GitHub/GitLab
-- [ ] Clone GitLab group (optional): `gitlabber -T -u https://gitlab.com -i '/your-group/**' ~/projects`
-      (see [docs/manual-steps.md](../docs/manual-steps.md#gitlab-group-clone-gitlabber))
+- [ ] Clone GitLab group (optional): `gitlabber -T -u "$GITLAB_URL" -i '/your-group/**' ~/projects`
+      (set `$GitLabUrl` in `config/kit.config.ps1`; see [docs/manual-steps.md](../docs/manual-steps.md#gitlab-group-clone-gitlabber))
 - [ ] `code ~/projects` or `cursor ~/projects` (VS Code / Cursor via WSL wrappers)
 
 ## Tool version bumps (existing distro)

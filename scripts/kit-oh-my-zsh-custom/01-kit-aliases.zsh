@@ -1,9 +1,8 @@
-# Kit aliases and helpers (ported from linux-dev-env/script/oh-my-zsh-custom).
+# Kit aliases and helpers.
 
 # Navigation
 alias cdprojects='cd "${PROJECTS:-${HOME}/projects}"'
 alias cdwsldevops='cd "${KIT_REPO:-${HOME}/projects/wsl-devops}"'
-alias cdlinuxdevenv='cdwsldevops'
 
 # Dev tools
 alias k='kubectl'

@@ -42,6 +42,6 @@ Write-Host 'Helpful commands:' -ForegroundColor Yellow
 Write-Host '  aws sts get-caller-identity'
 Write-Host '  docker run --rm hello-world'
 Write-Host '  cat ~/.ssh/id_ed25519.pub  # add to GitHub/GitLab'
-Write-Host '  gitlabber -T -u https://gitlab.com -i ''/your-group/**'' ~/projects  # -T avoids token in each repo .git/config'
+Write-Host ('  gitlabber -T -u {0} -i ''/your-group/**'' ~/projects  # -T avoids token in each repo .git/config' -f $GitLabUrl.TrimEnd('/'))
 Write-Host '  code .    # VS Code (Windows host + Remote-WSL)'
 Write-Host '  cursor .  # Cursor (Windows host + Remote-WSL)'

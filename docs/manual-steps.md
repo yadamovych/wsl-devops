@@ -58,8 +58,9 @@ After the first HTTPS git operation, sign in when Windows prompts you; credentia
 
 ## GitLab group clone (gitlabber)
 
-Clone an entire group **with subgroups** into `~/projects`. Use a GitLab personal access token
-with `read_api` and `read_repository` scopes.
+Clone an entire group **with subgroups** into `~/projects`. Set your GitLab host once in
+`config/kit.config.ps1` as `$GitLabUrl` (default `https://gitlab.com`). WSL exports it as
+`GITLAB_URL` for gitlabber. Use a personal access token with `read_api` and `read_repository` scopes.
 
 ```bash
 # Optional: set token for this shell (works in zsh and bash; -s hides input)
@@ -68,11 +69,11 @@ read -s GITLAB_TOKEN
 echo
 export GITLAB_TOKEN
 
-# Preview the tree (no clone)
-gitlabber -p -u https://gitlab.com -i '/your-group/**'
+# Preview the tree (no clone) — -u defaults to $GITLAB_URL when set in the shell
+gitlabber -p -u "$GITLAB_URL" -i '/your-group/**'
 
 # Clone group + subgroups (-T keeps the token out of each repo's .git/config)
-gitlabber -T -u https://gitlab.com -i '/your-group/**' ~/projects
+gitlabber -T -u "$GITLAB_URL" -i '/your-group/**' ~/projects
 ```
 
 **Always pass `-T` (`--hide-token`)** when using HTTP — without it, gitlabber embeds the token in
@@ -82,7 +83,7 @@ Alternatives:
 
 - **SSH clones:** `gitlabber -m ssh ...` or set `$GitlabberCloneMethod = "ssh"` in
   `config/kit.config.ps1` before install (SSH key must be in GitLab).
-- **Store token once:** `gitlabber --store-token -u https://gitlab.com` (still use `-T` when cloning).
+- **Store token once:** `gitlabber --store-token -u "$GITLAB_URL"` (still use `-T` when cloning).
 
 After `git pull` on existing repos, the Windows credential helper above handles auth. To strip a
 token already saved in a remote URL:
@@ -125,9 +126,10 @@ Fresh installs get **oh-my-zsh** from a **pinned GitHub tarball** at an immutabl
 
 If upstream `master` moves or is compromised, your distro stays on the pinned commit until **you** bump `$OhMyZshCommit` in `config/tool-versions.ps1`.
 
-Default shell is **zsh** with theme `robbyrussell`, plugins `git aws docker kubectl helm`, and kit aliases from `scripts/kit-oh-my-zsh-custom/` (ported from your `linux-dev-env` project; ZEB-internal paths omitted).
+Default shell is **zsh** with theme `robbyrussell`, plugins `git aws docker kubectl helm`, and kit
+aliases from `scripts/kit-oh-my-zsh-custom/`.
 
-Useful aliases: `pwsh`, `k` (kubectl), `cdprojects`, `cdwsldevops` / `cdlinuxdevenv`, `git-get-large-files`, `update`.
+Useful aliases: `pwsh`, `k` (kubectl), `cdprojects`, `cdwsldevops`, `git-get-large-files`, `update`.
 
 On an **existing** distro:
 
@@ -135,6 +137,7 @@ On an **existing** distro:
 sudo env OH_MY_ZSH_PIN=2026.06.15 \
   OH_MY_ZSH_COMMIT=df34d2b8d575777465aed8ae9b7cd90d63fdcd6e \
   GITLABBER_CLONE_METHOD=http \
+  GITLAB_URL=https://gitlab.com \
   bash /mnt/c/Users/<you>/Projects/wsl-devops/scripts/install-oh-my-zsh.sh devops
 ```
 

@@ -12,6 +12,8 @@ OH_MY_ZSH_COMMIT="${OH_MY_ZSH_COMMIT:-${OH_MY_ZSH_REF:-}}"
 OH_MY_ZSH_PIN="${OH_MY_ZSH_PIN:-}"
 OMZ_TARBALL_BASE="${OH_MY_ZSH_TARBALL_BASE:-https://github.com/ohmyzsh/ohmyzsh/archive}"
 GITLABBER_METHOD="${GITLABBER_CLONE_METHOD:-http}"
+GITLAB_URL="${GITLAB_URL:-https://gitlab.com}"
+GITLAB_URL="${GITLAB_URL%/}"
 KIT_MARKER='# wsl-devops-kit zshrc'
 
 if [[ -z "$U" ]]; then
@@ -135,6 +137,7 @@ export PATH="\${HOME}/.local/bin:/snap/bin:\${PATH}"
 export EDITOR=vim
 export PROJECTS=~/projects
 export GITLABBER_CLONE_METHOD="${GITLABBER_METHOD}"
+export GITLAB_URL="${GITLAB_URL}"
 export KIT_REPO="\${HOME}/projects/wsl-devops"
 export BROWSER="\${HOME}/.local/bin/wsl-browser"
 eval "\$(direnv hook zsh)"

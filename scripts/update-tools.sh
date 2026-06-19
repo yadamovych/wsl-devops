@@ -113,6 +113,7 @@ sed 's/\r$//' "${REPO_ROOT}/scripts/install-oh-my-zsh.sh" | \
   OH_MY_ZSH_PIN="${OH_MY_ZSH_PIN}" OH_MY_ZSH_COMMIT="${OH_MY_ZSH_COMMIT}" \
   KIT_REPO_ROOT="${REPO_ROOT}" KIT_ZSH_CUSTOM_DIR="${REPO_ROOT}/scripts/kit-oh-my-zsh-custom" \
   GITLABBER_CLONE_METHOD="${GITLABBER_CLONE_METHOD:-http}" \
+  GITLAB_URL="${GITLAB_URL:-https://gitlab.com}" \
   bash -s -- "${LINUX_USERNAME}"
 
 # -- VS Code / Cursor CLI wrappers ---------------------------------------------

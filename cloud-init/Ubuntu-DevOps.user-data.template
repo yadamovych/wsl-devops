@@ -58,7 +58,7 @@ write_files:
     permissions: '0755'
     content: |
       #!/bin/bash
-      set -u
+      set -euo pipefail
       export DEBIAN_FRONTEND=noninteractive
       U={{LINUX_USERNAME}}
 
@@ -72,9 +72,11 @@ write_files:
         python3 python3-venv python3-pip pipx \
         direnv pass age \
         net-tools dnsutils iputils-ping openssh-client \
-        unattended-upgrades vim zsh snapd wslu
+        unattended-upgrades vim zsh snapd
+      # wslu (wslview) is not packaged on Ubuntu 26.04; ~/.local/bin/wsl-browser
+      # falls back to cmd.exe /c start when wslview is absent.
 
-      sudo -u "$U" pipx ensurepath || true
+      sudo -u "$U" pipx ensurepath
       sudo -u "$U" mkdir -p "/home/$U/projects" "/home/$U/bin" \
         "/home/$U/.config/aws" "/home/$U/.config/opentofu" \
         "/home/$U/.cache/tofu/plugins" "/home/$U/.ssh"
@@ -137,8 +139,7 @@ write_files:
         HOME="/home/$U" \
         PATH="/home/$U/.local/bin:/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
         PIP_NO_INPUT=1 NO_COLOR=1 FORCE_COLOR=0 \
-        pipx install --quiet "gitlabber=={{GITLABBER_VERSION}}" \
-        >/dev/null 2>&1 || true
+        pipx install --quiet "gitlabber=={{GITLABBER_VERSION}}"
 
       # -- asdf (standalone binary - not available in snap) -------------------
       ASDF_VER="{{ASDF_VERSION}}"
@@ -157,6 +158,7 @@ write_files:
       OH_MY_ZSH_PIN="{{OH_MY_ZSH_PIN}}" OH_MY_ZSH_COMMIT="{{OH_MY_ZSH_COMMIT}}" \
         KIT_ZSH_CUSTOM_DIR=/opt/kit-oh-my-zsh-custom \
         GITLABBER_CLONE_METHOD="{{GITLABBER_CLONE_METHOD}}" \
+        GITLAB_URL="{{GITLAB_URL}}" \
         bash /opt/install-oh-my-zsh.sh "$U"
 
       # -- OpenTofu plugin cache ------------------------------------------------
@@ -170,6 +172,7 @@ write_files:
       export EDITOR=vim
       export PROJECTS=~/projects
       export GITLABBER_CLONE_METHOD="{{GITLABBER_CLONE_METHOD}}"
+      export GITLAB_URL="{{GITLAB_URL}}"
       export BROWSER="${HOME}/.local/bin/wsl-browser"
       if [[ "${TERM_PROGRAM:-}" != "vscode" && -z "${VSCODE_IPC_HOOK_CLI:-}" && "$PWD" == "$HOME" ]]; then
         cd ~/projects 2>/dev/null || true
