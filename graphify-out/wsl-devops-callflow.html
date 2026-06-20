@@ -1,0 +1,2030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>wsl-devops — Complete Call Flow &amp; Architecture Documentation</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+:root {
+  --bg: #0f172a; --surface: #1e293b; --border: #334155;
+  --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8;
+  --warn: #fbbf24; --err: #f87171; --ok: #34d399;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+.container { max-width: 1200px; margin: 0 auto; padding: 40px 24px; }
+h1 { font-size: 2.4rem; margin-bottom: 8px; background: linear-gradient(135deg, var(--accent), #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+h2 { font-size: 1.7rem; margin: 48px 0 16px; padding-bottom: 8px; border-bottom: 2px solid var(--accent); }
+h3 { font-size: 1.25rem; margin: 32px 0 12px; color: var(--accent); }
+h4 { font-size: 1.05rem; margin: 20px 0 8px; color: var(--warn); }
+p { margin: 8px 0; color: var(--muted); }
+.subtitle { color: var(--muted); font-size: 1.1rem; margin-bottom: 32px; }
+.mermaid { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 20px 0; overflow-x: auto; position: relative; }
+.mermaid.is-enhanced { padding: 0; overflow: hidden; min-height: 260px; }
+.mermaid-viewport { padding: 54px 24px 24px; overflow: hidden; cursor: grab; touch-action: none; min-height: 260px; }
+.mermaid-viewport.is-dragging { cursor: grabbing; }
+.mermaid-viewport svg { max-width: none !important; height: auto; transform-origin: 0 0; transition: transform 120ms ease; }
+.mermaid-toolbar { position: absolute; top: 10px; right: 10px; z-index: 3; display: flex; align-items: center; gap: 6px; padding: 6px; background: rgba(15,23,42,0.92); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.28); }
+.mermaid-toolbar button, .mermaid-toolbar .zoom-level { height: 28px; min-width: 32px; border: 1px solid var(--border); border-radius: 6px; background: #1e293b; color: var(--text); font: 600 0.78rem system-ui, sans-serif; display: inline-flex; align-items: center; justify-content: center; }
+.mermaid-toolbar button { cursor: pointer; }
+.mermaid-toolbar button:hover { border-color: var(--accent); color: var(--accent); }
+.mermaid-toolbar .zoom-level { min-width: 52px; color: var(--muted); background: transparent; }
+.call-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.92rem; }
+.call-table th { background: #1a2744; color: var(--accent); text-align: left; padding: 10px 14px; border: 1px solid var(--border); }
+.call-table td { padding: 8px 14px; border: 1px solid var(--border); vertical-align: top; }
+.call-table tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
+.tag-async { background: #7c3aed33; color: #a78bfa; }
+.tag-class { background: #05966933; color: var(--ok); }
+.tag-func { background: #2563eb33; color: var(--accent); }
+.tag-cmd { background: #d9770633; color: var(--warn); }
+.tag-endpoint { background: #dc262633; color: var(--err); }
+.tag-hook { background: #db277733; color: #f472b6; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin: 16px 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; margin: 16px 0; }
+.arrow-chain { font-family: 'Fira Code', monospace; font-size: 0.85rem; color: var(--accent); padding: 10px; background: rgba(56,189,248,0.06); border-radius: 6px; }
+code { font-family: 'Fira Code', 'Cascadia Code', monospace; background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 3px; font-size: 0.88em; }
+ul, ol { margin: 8px 0 8px 24px; color: var(--muted); }
+li { margin: 4px 0; }
+a { color: var(--accent); }
+hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+.nav { position: sticky; top: 0; background: var(--bg); z-index: 10; padding: 12px 0; border-bottom: 1px solid var(--border); display: flex; gap: 20px; flex-wrap: wrap; font-size: 0.9rem; }
+.nav a { text-decoration: none; }
+.nav a:hover { text-decoration: underline; }
+@media (max-width: 768px) { .container { padding: 16px; } h1 { font-size: 1.8rem; } }
+
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>wsl-devops — Complete Call Flow &amp; Architecture Documentation</h1>
+<p class="subtitle">Generated from graphify knowledge graph: 95 nodes, 86 edges, 32 communities. Commit: 8d387d2</p>
+
+<div class="nav">
+    <a href="#overview">Architecture Overview</a>
+    <a href="#analysis-clustering">Analysis &amp; Clustering</a>
+    <a href="#cli-skills">CLI &amp; Skill Installers</a>
+    <a href="#ingest-cache-update">Ingestion &amp; Updates</a>
+    <a href="#tests-fixtures">Tests &amp; Fixtures</a>
+    <a href="#community-1">Community 1</a>
+    <a href="#community-5">Community 5</a>
+    <a href="#community-8">Community 8</a>
+    <a href="#community-13">Community 13</a>
+    <a href="#community-14">Community 14</a>
+    <a href="#community-15">Community 15</a>
+    <a href="#community-16">Community 16</a>
+    <a href="#community-17">Community 17</a>
+    <a href="#community-18">Community 18</a>
+    <a href="#community-19">Community 19</a>
+    <a href="#other">Other</a>
+</div>
+
+<!-- ====== Architecture Overview ====== -->
+<h2 id="overview">1. Architecture Overview</h2>
+
+<div class="mermaid">
+
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    ANALYSIS_CLUSTERING_C79796DA("Analysis &amp; Clustering<br/><small>2 nodes</small>")
+    class ANALYSIS_CLUSTERING_C79796DA module;
+    CLI_SKILLS_9964CBB8("CLI &amp; Skill Installers<br/><small>31 nodes</small>")
+    class CLI_SKILLS_9964CBB8 module;
+    INGEST_CACHE_UPDATE_FF457338("Ingestion &amp; Updates<br/><small>7 nodes</small>")
+    class INGEST_CACHE_UPDATE_FF457338 module;
+    TESTS_FIXTURES_B84B1DCC("Tests &amp; Fixtures<br/><small>16 nodes</small>")
+    class TESTS_FIXTURES_B84B1DCC module;
+    COMMUNITY_1_3073A0DB("Community 1<br/><small>10 nodes</small>")
+    class COMMUNITY_1_3073A0DB module;
+    COMMUNITY_5_2966028D("Community 5<br/><small>5 nodes</small>")
+    class COMMUNITY_5_2966028D module;
+    COMMUNITY_8_9FC4FAC0("Community 8<br/><small>3 nodes</small>")
+    class COMMUNITY_8_9FC4FAC0 module;
+    COMMUNITY_13_E329587C("Community 13<br/><small>2 nodes</small>")
+    class COMMUNITY_13_E329587C module;
+    COMMUNITY_14_21BC55C3("Community 14<br/><small>2 nodes</small>")
+    class COMMUNITY_14_21BC55C3 module;
+    COMMUNITY_15_4BECAAD7("Community 15<br/><small>2 nodes</small>")
+    class COMMUNITY_15_4BECAAD7 module;
+    COMMUNITY_16_BD3EE841("Community 16<br/><small>2 nodes</small>")
+    class COMMUNITY_16_BD3EE841 module;
+    COMMUNITY_17_648F8D7C("Community 17<br/><small>2 nodes</small>")
+    class COMMUNITY_17_648F8D7C module;
+    COMMUNITY_18_A335126F("Community 18<br/><small>1 nodes</small>")
+    class COMMUNITY_18_A335126F module;
+    COMMUNITY_19_9462A0B9("Community 19<br/><small>1 nodes</small>")
+    class COMMUNITY_19_9462A0B9 module;
+    OTHER_D0941E68("Other<br/><small>9 nodes</small>")
+    class OTHER_D0941E68 module;
+    ANALYSIS_CLUSTERING_C79796DA -.-> CLI_SKILLS_9964CBB8
+    CLI_SKILLS_9964CBB8 -.-> INGEST_CACHE_UPDATE_FF457338
+    INGEST_CACHE_UPDATE_FF457338 -.-> TESTS_FIXTURES_B84B1DCC
+    TESTS_FIXTURES_B84B1DCC -.-> COMMUNITY_1_3073A0DB
+    COMMUNITY_1_3073A0DB -.-> COMMUNITY_5_2966028D
+    COMMUNITY_5_2966028D -.-> COMMUNITY_8_9FC4FAC0
+    COMMUNITY_8_9FC4FAC0 -.-> COMMUNITY_13_E329587C
+    COMMUNITY_13_E329587C -.-> COMMUNITY_14_21BC55C3
+    COMMUNITY_14_21BC55C3 -.-> COMMUNITY_15_4BECAAD7
+    COMMUNITY_15_4BECAAD7 -.-> COMMUNITY_16_BD3EE841
+    COMMUNITY_16_BD3EE841 -.-> COMMUNITY_17_648F8D7C
+    COMMUNITY_17_648F8D7C -.-> COMMUNITY_18_A335126F
+    COMMUNITY_18_A335126F -.-> COMMUNITY_19_9462A0B9
+    COMMUNITY_19_9462A0B9 -.-> OTHER_D0941E68
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h4>Architecture Layers</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>Layer</th><th>Nodes</th><th>Communities</th></tr>
+      <tr><td>Analysis &amp; Clustering</td><td>2</td><td><code>10</code></td></tr><tr><td>CLI &amp; Skill Installers</td><td>31</td><td><code>2, 3, 4, 6, 11, 12</code></td></tr><tr><td>Ingestion &amp; Updates</td><td>7</td><td><code>7, 9</code></td></tr><tr><td>Tests &amp; Fixtures</td><td>16</td><td><code>0, 28, 29, 30</code></td></tr><tr><td>Community 1</td><td>10</td><td><code>1</code></td></tr><tr><td>Community 5</td><td>5</td><td><code>5</code></td></tr><tr><td>Community 8</td><td>3</td><td><code>8</code></td></tr><tr><td>Community 13</td><td>2</td><td><code>13</code></td></tr><tr><td>Community 14</td><td>2</td><td><code>14</code></td></tr><tr><td>Community 15</td><td>2</td><td><code>15</code></td></tr><tr><td>Community 16</td><td>2</td><td><code>16</code></td></tr><tr><td>Community 17</td><td>2</td><td><code>17</code></td></tr><tr><td>Community 18</td><td>1</td><td><code>18</code></td></tr><tr><td>Community 19</td><td>1</td><td><code>19</code></td></tr><tr><td>Other</td><td>9</td><td><code>20, 21, 22, 23, 24, 25, 26, 27, 31</code></td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Core Flow</h4>
+    <div class="arrow-chain">Analysis &amp; Clustering -&gt; CLI &amp; Skill Installers -&gt; Ingestion &amp; Updates -&gt; Tests &amp; Fixtures -&gt; Community 1 -&gt; Community 5 -&gt; Community 8</div>
+  </div>
+</div>
+<div class="grid">
+  <div class="card">
+    <h4>Graph Report Highlights</h4>
+    <ul>
+      <li>95 nodes · 86 edges · 32 communities (21 shown, 11 thin omitted)</li>
+      <li>Extraction: 91% EXTRACTED · 9% INFERRED · 0% AMBIGUOUS · INFERRED: 8 edges (avg confidence: 0.8)</li>
+      <li>Token cost: 0 input · 0 output</li>
+      <li>1. `Get-KitPrerequisite()` - 8 edges</li>
+      <li>2. `WSL` - 7 edges</li>
+      <li>3. `Repeat Install Checklist` - 5 edges</li>
+    </ul>
+  </div>
+</div>
+<hr>
+<!-- ====== 2. Analysis & Clustering ====== -->
+<h2 id="analysis-clustering">2. Analysis &amp; Clustering</h2>
+<p>Analysis &amp; Clustering groups implementation around add, snap, pathsh, script, mostly in add-snap-path.sh. This section covers 2 nodes and 1 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Analysis &amp; Clustering (2 nodes, 1 edges)
+    add_snap_path_7956a254("add-snap-path.sh")
+    c_users_yadam_projects_wsl_devops_add_snap_path_d5eff6e4("add-snap-path.sh script<br/><small>add-snap-path.sh</small>")
+    add_snap_path_7956a254 -->|contains| c_users_yadam_projects_wsl_devops_add_snap_path_d5eff6e4
+    class add_snap_path_7956a254 function;
+    class c_users_yadam_projects_wsl_devops_add_snap_path_d5eff6e4 function;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>add-snap-path.sh</code><br><small style="color:var(--muted)">add-snap-path.sh</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>add-snap-path.sh node in add-snap-path.sh.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>add-snap-path.sh script</code><br><small style="color:var(--muted)">add-snap-path.sh</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>add-snap-path.sh script node in add-snap-path.sh.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>add-snap-path.sh</code></td><td>2 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x1. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 3. CLI & Skill Installers ====== -->
+<h2 id="cli-skills">3. CLI &amp; Skill Installers</h2>
+<p>CLI &amp; Skill Installers groups implementation around install, scripts, wsl, script, mostly in scripts/install-oh-my-zsh.sh, docs/troubleshooting.md, scripts/install.ps1. This section covers 31 nodes and 32 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: CLI &amp; Skill Installers (31 nodes, 32 edges)
+    subgraph cli_skills_scripts_install_oh_my_zsh_sh_d14a7739["scripts/install-oh-my-zsh.sh"]
+        c_users_yadam_projects_wsl_devops_scripts_instal_3f98136e("install-oh-my-zsh.sh script<br/><small>scripts/install-oh-my-zsh.sh</small>")
+        scripts_install_oh_my_zsh_install_oh_my_zsh_b2477f8c("_install_oh_my_zsh()<br/><small>scripts/install-oh-my-zsh.sh</small>")
+        scripts_install_oh_my_zsh_install_kit_zsh_custom_f2eca307("_install_kit_zsh_custom()<br/><small>scripts/install-oh-my-zsh.sh</small>")
+        scripts_install_oh_my_zsh_write_kit_zshrc_ba478a6f("_write_kit_zshrc()<br/><small>scripts/install-oh-my-zsh.sh</small>")
+        scripts_install_oh_my_zsh_kit_zsh_custom_src_ce9c85da("_kit_zsh_custom_src()<br/><small>scripts/install-oh-my-zsh.sh</small>")
+    end
+    subgraph cli_skills_docs_troubleshooting_md_8cbea9c8["docs/troubleshooting.md"]
+        troubleshooting_wsl_b59e074d("WSL<br/><small>docs/troubleshooting.md</small>")
+        troubleshooting_docker_17f7770f("Docker<br/><small>docs/troubleshooting.md</small>")
+        troubleshooting_systemd_f683c600("systemd<br/><small>docs/troubleshooting.md</small>")
+    end
+    subgraph cli_skills_scripts_check_tool_updates_ps1_ebd58385["scripts/check-tool-updates.ps1"]
+        troubleshooting_check_tool_updates_581b498c("check-tool-updates.ps1")
+        scripts_check_tool_updates_3623a241("Check Tool Updates Script<br/><small>scripts/check-tool-updates.ps1</small>")
+    end
+    windows_terminal_a354c2b9("Windows Terminal<br/><small>/aka.ms/terminal</small>")
+    vs_code_08f77fb6("VS Code<br/><small>/code.visualstudio.com/</small>")
+    git_for_windows_910f54cc("Git for Windows<br/><small>/gitforwindows.org/</small>")
+    troubleshooting_kit_config_6e4246b5("kit.config.ps1")
+    troubleshooting_wsl_config_29418a25("wsl.config<br/><small>config/wsl.config.template</small>")
+    docker_desktop_db87cc87("Docker Desktop<br/><small>products/docker-desktop/</small>")
+    troubleshooting_install_3e4e5eb4("install.ps1")
+    troubleshooting_uninstall_f31bbf52("uninstall.ps1")
+    c_users_yadam_projects_wsl_devops_scripts_instal_3f98136e -->|calls| scripts_install_oh_my_zsh_install_kit_zsh_custom_f2eca307
+    c_users_yadam_projects_wsl_devops_scripts_instal_3f98136e -->|calls| scripts_install_oh_my_zsh_install_oh_my_zsh_b2477f8c
+    c_users_yadam_projects_wsl_devops_scripts_instal_3f98136e -->|calls| scripts_install_oh_my_zsh_write_kit_zshrc_ba478a6f
+    scripts_install_oh_my_zsh_install_oh_my_zsh_b2477f8c -->|calls| scripts_install_oh_my_zsh_install_kit_zsh_custom_f2eca307
+    troubleshooting_uninstall_f31bbf52 -->|calls| troubleshooting_wsl_b59e074d
+    troubleshooting_wsl_b59e074d -->|calls| troubleshooting_check_tool_updates_581b498c
+    troubleshooting_wsl_b59e074d -->|calls| troubleshooting_install_3e4e5eb4
+    %% Omitted for readability: 13 nodes, 0 edges
+    class c_users_yadam_projects_wsl_devops_scripts_instal_3f98136e function;
+    class scripts_install_oh_my_zsh_install_oh_my_zsh_b2477f8c function;
+    class scripts_install_oh_my_zsh_install_kit_zsh_custom_f2eca307 function;
+    class scripts_install_oh_my_zsh_write_kit_zshrc_ba478a6f function;
+    class scripts_install_oh_my_zsh_kit_zsh_custom_src_ce9c85da function;
+    class troubleshooting_wsl_b59e074d klass;
+    class troubleshooting_docker_17f7770f klass;
+    class troubleshooting_systemd_f683c600 function;
+    class troubleshooting_check_tool_updates_581b498c function;
+    class scripts_check_tool_updates_3623a241 klass;
+    class windows_terminal_a354c2b9 klass;
+    class vs_code_08f77fb6 klass;
+    class git_for_windows_910f54cc klass;
+    class troubleshooting_kit_config_6e4246b5 function;
+    class troubleshooting_wsl_config_29418a25 function;
+    class docker_desktop_db87cc87 klass;
+    class troubleshooting_install_3e4e5eb4 function;
+    class troubleshooting_uninstall_f31bbf52 function;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>Fresh Install Checklist</code><br><small style="color:var(--muted)">checklists/fresh-install.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing Fresh Install Checklist.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>Manual Post-Provision Steps</code><br><small style="color:var(--muted)">docs/manual-steps.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing Manual Post-Provision Steps.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>Prerequisites</code><br><small style="color:var(--muted)">docs/prerequisites.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing Prerequisites.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>Install Script</code><br><small style="color:var(--muted)">scripts/install.ps1</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>Docker Desktop</code><br><small style="color:var(--muted)">products/docker-desktop/</small><br><code>Git for Windows</code><br><small style="color:var(--muted)">/gitforwindows.org/</small></td>
+  <td>Install Script node in scripts/install.ps1.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>Git for Windows</code><br><small style="color:var(--muted)">/gitforwindows.org/</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>Install Script</code><br><small style="color:var(--muted)">scripts/install.ps1</small></td>
+  <td>No direct outbound edge</td>
+  <td>Turns a local path or remote repository into analysis context.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>Docker Desktop</code><br><small style="color:var(--muted)">products/docker-desktop/</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>Install Script</code><br><small style="color:var(--muted)">scripts/install.ps1</small></td>
+  <td>No direct outbound edge</td>
+  <td>Docker Desktop node in products/docker-desktop/.</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>VS Code</code><br><small style="color:var(--muted)">/code.visualstudio.com/</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>VS Code node in /code.visualstudio.com/.</td>
+</tr>
+<tr>
+  <td>8</td>
+  <td><code>Windows Terminal</code><br><small style="color:var(--muted)">/aka.ms/terminal</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Windows Terminal node in /aka.ms/terminal.</td>
+</tr>
+<tr>
+  <td>9</td>
+  <td><code>uninstall.ps1</code><br><small style="color:var(--muted)">scripts/uninstall.ps1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>WSL</code><br><small style="color:var(--muted)">docs/troubleshooting.md</small></td>
+  <td>uninstall.ps1 node in scripts/uninstall.ps1.</td>
+</tr>
+<tr>
+  <td>10</td>
+  <td><code>WSL</code><br><small style="color:var(--muted)">docs/troubleshooting.md</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>uninstall.ps1</code><br><small style="color:var(--muted)">scripts/uninstall.ps1</small></td>
+  <td><code>check-tool-updates.ps1</code><br><small style="color:var(--muted)">scripts/check-tool-updates.ps1</small><br><code>install.ps1</code><br><small style="color:var(--muted)">scripts/install.ps1</small></td>
+  <td>WSL node in docs/troubleshooting.md.</td>
+</tr>
+<tr>
+  <td>11</td>
+  <td><code>systemd</code><br><small style="color:var(--muted)">docs/troubleshooting.md</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>systemd node in docs/troubleshooting.md.</td>
+</tr>
+<tr>
+  <td>12</td>
+  <td><code>Docker</code><br><small style="color:var(--muted)">docs/troubleshooting.md</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Docker node in docs/troubleshooting.md.</td>
+</tr>
+<tr>
+  <td>13</td>
+  <td><code>wsl.config</code><br><small style="color:var(--muted)">config/wsl.config.template</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Reads, resolves, or persists project configuration.</td>
+</tr>
+<tr>
+  <td>14</td>
+  <td><code>kit.config.ps1</code><br><small style="color:var(--muted)">config/kit.config.ps1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Reads, resolves, or persists project configuration.</td>
+</tr>
+<tr>
+  <td>15</td>
+  <td><code>install.ps1</code><br><small style="color:var(--muted)">scripts/install.ps1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>WSL</code><br><small style="color:var(--muted)">docs/troubleshooting.md</small></td>
+  <td>No direct outbound edge</td>
+  <td>install.ps1 node in scripts/install.ps1.</td>
+</tr>
+<tr>
+  <td>16</td>
+  <td><code>check-tool-updates.ps1</code><br><small style="color:var(--muted)">scripts/check-tool-updates.ps1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>WSL</code><br><small style="color:var(--muted)">docs/troubleshooting.md</small></td>
+  <td>No direct outbound edge</td>
+  <td>check-tool-updates.ps1 node in scripts/check-tool-updates.ps1.</td>
+</tr>
+<tr>
+  <td>17</td>
+  <td><code>install-oh-my-zsh.sh</code><br><small style="color:var(--muted)">scripts/install-oh-my-zsh.sh</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>install-oh-my-zsh.sh node in scripts/install-oh-my-zsh.sh.</td>
+</tr>
+<tr>
+  <td>18</td>
+  <td><code>install-oh-my-zsh.sh script</code><br><small style="color:var(--muted)">scripts/install-oh-my-zsh.sh</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>_install_kit_zsh_custom()</code><br><small style="color:var(--muted)">scripts/install-oh-my-zsh.sh</small><br><code>_install_oh_my_zsh()</code><br><small style="color:var(--muted)">scripts/install-oh-my-zsh.sh</small><br><code>_write_kit_zshrc()</code><br><small style="color:var(--muted)">scripts/install-oh-my-zsh.sh</small></td>
+  <td>install-oh-my-zsh.sh script node in scripts/install-oh-my-zsh.sh.</td>
+</tr>
+<tr>
+  <td>19</td>
+  <td><code>_install_oh_my_zsh()</code><br><small style="color:var(--muted)">scripts/install-oh-my-zsh.sh</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>install-oh-my-zsh.sh script</code><br><small style="color:var(--muted)">scripts/install-oh-my-zsh.sh</small></td>
+  <td><code>_install_kit_zsh_custom()</code><br><small style="color:var(--muted)">scripts/install-oh-my-zsh.sh</small></td>
+  <td>_install_oh_my_zsh() node in scripts/install-oh-my-zsh.sh.</td>
+</tr>
+<tr>
+  <td>20</td>
+  <td><code>_kit_zsh_custom_src()</code><br><small style="color:var(--muted)">scripts/install-oh-my-zsh.sh</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>_kit_zsh_custom_src() node in scripts/install-oh-my-zsh.sh.</td>
+</tr>
+<tr>
+  <td>21</td>
+  <td><code>_install_kit_zsh_custom()</code><br><small style="color:var(--muted)">scripts/install-oh-my-zsh.sh</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>_install_oh_my_zsh()</code><br><small style="color:var(--muted)">scripts/install-oh-my-zsh.sh</small><br><code>install-oh-my-zsh.sh script</code><br><small style="color:var(--muted)">scripts/install-oh-my-zsh.sh</small></td>
+  <td>No direct outbound edge</td>
+  <td>_install_kit_zsh_custom() node in scripts/install-oh-my-zsh.sh.</td>
+</tr>
+<tr>
+  <td>22</td>
+  <td><code>_write_kit_zshrc()</code><br><small style="color:var(--muted)">scripts/install-oh-my-zsh.sh</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>install-oh-my-zsh.sh script</code><br><small style="color:var(--muted)">scripts/install-oh-my-zsh.sh</small></td>
+  <td>No direct outbound edge</td>
+  <td>_write_kit_zshrc() node in scripts/install-oh-my-zsh.sh.</td>
+</tr>
+<tr>
+  <td>23</td>
+  <td><code>Repeat Install Checklist</code><br><small style="color:var(--muted)">checklists/repeat-install.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing Repeat Install Checklist.</td>
+</tr>
+<tr>
+  <td>24</td>
+  <td><code>Uninstall Script</code><br><small style="color:var(--muted)">scripts/uninstall.ps1</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Uninstall Script node in scripts/uninstall.ps1.</td>
+</tr>
+<tr>
+  <td>25</td>
+  <td><code>Verify Script</code><br><small style="color:var(--muted)">scripts/verify.ps1</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Verify Script node in scripts/verify.ps1.</td>
+</tr>
+<tr>
+  <td>26</td>
+  <td><code>Update Tools Script</code><br><small style="color:var(--muted)">scripts/update-tools.ps1</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Update Tools Script node in scripts/update-tools.ps1.</td>
+</tr>
+<tr>
+  <td>27</td>
+  <td><code>Check Tool Updates Script</code><br><small style="color:var(--muted)">scripts/check-tool-updates.ps1</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Check Tool Updates Script node in scripts/check-tool-updates.ps1.</td>
+</tr>
+<tr>
+  <td>28</td>
+  <td><code>install-wsl-browser.sh</code><br><small style="color:var(--muted)">scripts/install-wsl-browser.sh</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>install-wsl-browser.sh node in scripts/install-wsl-browser.sh.</td>
+</tr>
+<tr>
+  <td>29</td>
+  <td><code>install-wsl-browser.sh script</code><br><small style="color:var(--muted)">scripts/install-wsl-browser.sh</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>install-wsl-browser.sh script node in scripts/install-wsl-browser.sh.</td>
+</tr>
+<tr>
+  <td>30</td>
+  <td><code>install-wsl-editors.sh</code><br><small style="color:var(--muted)">scripts/install-wsl-editors.sh</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>install-wsl-editors.sh node in scripts/install-wsl-editors.sh.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>scripts/install-oh-my-zsh.sh</code></td><td>6 nodes</td></tr>
+<tr><td><code>docs/troubleshooting.md</code></td><td>3 nodes</td></tr>
+<tr><td><code>scripts/check-tool-updates.ps1</code></td><td>2 nodes</td></tr>
+<tr><td><code>scripts/install-wsl-browser.sh</code></td><td>2 nodes</td></tr>
+<tr><td><code>scripts/install-wsl-editors.sh</code></td><td>2 nodes</td></tr>
+<tr><td><code>scripts/install.ps1</code></td><td>2 nodes</td></tr>
+<tr><td><code>scripts/uninstall.ps1</code></td><td>2 nodes</td></tr>
+<tr><td><code>checklists/fresh-install.md</code></td><td>1 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: references x14, calls x7, defines x4, contains x3. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 4. Ingestion & Updates ====== -->
+<h2 id="ingest-cache-update">4. Ingestion &amp; Updates</h2>
+<p>Ingestion &amp; Updates groups implementation around update, scripts, toolssh, toolsps1, mostly in scripts/update-tools.sh, scripts/update-tools.ps1, scripts/render-templates.ps1. This section covers 7 nodes and 5 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Ingestion &amp; Updates (7 nodes, 5 edges)
+    subgraph ingest_cache_update_scripts_update_tools_sh_0479b70f["scripts/update-tools.sh"]
+        scripts_update_tools_debian_frontend_7f572cbc("DEBIAN_FRONTEND<br/><small>scripts/update-tools.sh</small>")
+        scripts_update_tools_path_dc2cd6cc("PATH<br/><small>scripts/update-tools.sh</small>")
+        scripts_update_tools_sh_scripts_update_tools_84c7ab79("update-tools.sh")
+        c_users_yadam_projects_wsl_devops_scripts_update_4cd996c1("update-tools.sh script<br/><small>scripts/update-tools.sh</small>")
+    end
+    troubleshooting_render_templates_68799124("render-templates.ps1")
+    troubleshooting_update_tools_711361e8("update-tools.ps1")
+    troubleshooting_verify_9630f16d("verify.ps1")
+    troubleshooting_update_tools_711361e8 -->|calls| troubleshooting_render_templates_68799124
+    class scripts_update_tools_debian_frontend_7f572cbc klass;
+    class scripts_update_tools_path_dc2cd6cc klass;
+    class scripts_update_tools_sh_scripts_update_tools_84c7ab79 function;
+    class c_users_yadam_projects_wsl_devops_scripts_update_4cd996c1 function;
+    class troubleshooting_render_templates_68799124 function;
+    class troubleshooting_update_tools_711361e8 function;
+    class troubleshooting_verify_9630f16d function;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>update-tools.sh</code><br><small style="color:var(--muted)">scripts/update-tools.sh</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>update-tools.sh node in scripts/update-tools.sh.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>update-tools.sh script</code><br><small style="color:var(--muted)">scripts/update-tools.sh</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>update-tools.sh script node in scripts/update-tools.sh.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>PATH</code><br><small style="color:var(--muted)">scripts/update-tools.sh</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>PATH node in scripts/update-tools.sh.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>DEBIAN_FRONTEND</code><br><small style="color:var(--muted)">scripts/update-tools.sh</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>DEBIAN_FRONTEND node in scripts/update-tools.sh.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>update-tools.ps1</code><br><small style="color:var(--muted)">scripts/update-tools.ps1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>render-templates.ps1</code><br><small style="color:var(--muted)">scripts/render-templates.ps1</small></td>
+  <td>update-tools.ps1 node in scripts/update-tools.ps1.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>render-templates.ps1</code><br><small style="color:var(--muted)">scripts/render-templates.ps1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>update-tools.ps1</code><br><small style="color:var(--muted)">scripts/update-tools.ps1</small></td>
+  <td><code>verify.ps1</code><br><small style="color:var(--muted)">scripts/verify.ps1</small></td>
+  <td>render-templates.ps1 node in scripts/render-templates.ps1.</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>verify.ps1</code><br><small style="color:var(--muted)">scripts/verify.ps1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>render-templates.ps1</code><br><small style="color:var(--muted)">scripts/render-templates.ps1</small></td>
+  <td>No direct outbound edge</td>
+  <td>verify.ps1 node in scripts/verify.ps1.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>scripts/update-tools.sh</code></td><td>4 nodes</td></tr>
+<tr><td><code>scripts/render-templates.ps1</code></td><td>1 nodes</td></tr>
+<tr><td><code>scripts/update-tools.ps1</code></td><td>1 nodes</td></tr>
+<tr><td><code>scripts/verify.ps1</code></td><td>1 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: defines x2, contains x1, calls x1. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 5. Tests & Fixtures ====== -->
+<h2 id="tests-fixtures">5. Tests &amp; Fixtures</h2>
+<p>Tests &amp; Fixtures groups implementation around kitsecretspsm1, scripts, get, test, mostly in scripts/KitSecrets.psm1, tests/KitSecrets.Tests.ps1, tests/KitTemplate.Tests.ps1. This section covers 16 nodes and 24 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Tests &amp; Fixtures (16 nodes, 24 edges)
+    subgraph tests_fixtures_scripts_KitSecrets_psm1_7d565c97["scripts/KitSecrets.psm1"]
+        scripts_kitsecrets_test_kitcommand_9ecd2313("Test-KitCommand()<br/><small>scripts/KitSecrets.psm1</small>")
+        scripts_kitsecrets_convertto_ps1singlequoted_8432f304("ConvertTo-Ps1SingleQuoted()<br/><small>scripts/KitSecrets.psm1</small>")
+        scripts_kitsecrets_get_kitgitcredentialhelperpat_74bb6913("Get-KitGitCredentialHelperPath()<br/><small>scripts/KitSecrets.psm1</small>")
+        scripts_kitsecrets_get_kitosinfo_f453deda("Get-KitOsInfo()<br/><small>scripts/KitSecrets.psm1</small>")
+        scripts_kitsecrets_get_kitsecretsstatus_f138dac2("Get-KitSecretsStatus()<br/><small>scripts/KitSecrets.psm1</small>")
+        scripts_kitsecrets_test_kitinteractive_9720f05f("Test-KitInteractive()<br/><small>scripts/KitSecrets.psm1</small>")
+        scripts_kitsecrets_new_kitsecrets_8fcfeb76("New-KitSecrets()<br/><small>scripts/KitSecrets.psm1</small>")
+        scripts_kitsecrets_request_kitsecrets_47c2d47a("Request-KitSecrets()<br/><small>scripts/KitSecrets.psm1</small>")
+        scripts_kitsecrets_get_kitprerequisite_4cc6ac06("Get-KitPrerequisite()<br/><small>scripts/KitSecrets.psm1</small>")
+        scripts_kitsecrets_get_kitwslinfo_fa9086cb("Get-KitWslInfo()<br/><small>scripts/KitSecrets.psm1</small>")
+        scripts_kitsecrets_test_kitdockerready_99aeb9a8("Test-KitDockerReady()<br/><small>scripts/KitSecrets.psm1</small>")
+        scripts_kitsecrets_test_kitvirtualizationenabled_163e3a85("Test-KitVirtualizationEnabled()<br/><small>scripts/KitSecrets.psm1</small>")
+        scripts_kitsecrets_3bc8b44d("KitSecrets.psm1")
+    end
+    tests_kitsecrets_tests_4f92a011("KitSecrets.Tests.ps1")
+    tests_kittemplate_tests_4d0f7537("KitTemplate.Tests.ps1")
+    tests_kittoolversions_tests_b05f7e7a("KitToolVersions.Tests.ps1")
+    scripts_kitsecrets_convertto_ps1singlequoted_8432f304 -->|calls| scripts_kitsecrets_new_kitsecrets_8fcfeb76
+    scripts_kitsecrets_test_kitinteractive_9720f05f -->|calls| scripts_kitsecrets_request_kitsecrets_47c2d47a
+    scripts_kitsecrets_get_kitsecretsstatus_f138dac2 -->|calls| scripts_kitsecrets_get_kitprerequisite_4cc6ac06
+    scripts_kitsecrets_new_kitsecrets_8fcfeb76 -->|calls| scripts_kitsecrets_request_kitsecrets_47c2d47a
+    scripts_kitsecrets_test_kitcommand_9ecd2313 -->|calls| scripts_kitsecrets_get_kitprerequisite_4cc6ac06
+    scripts_kitsecrets_test_kitcommand_9ecd2313 -->|calls| scripts_kitsecrets_get_kitwslinfo_fa9086cb
+    scripts_kitsecrets_test_kitcommand_9ecd2313 -->|calls| scripts_kitsecrets_test_kitdockerready_99aeb9a8
+    scripts_kitsecrets_get_kitosinfo_f453deda -->|calls| scripts_kitsecrets_get_kitprerequisite_4cc6ac06
+    scripts_kitsecrets_test_kitvirtualizationenabled_163e3a85 -->|calls| scripts_kitsecrets_get_kitprerequisite_4cc6ac06
+    scripts_kitsecrets_get_kitwslinfo_fa9086cb -->|calls| scripts_kitsecrets_get_kitprerequisite_4cc6ac06
+    scripts_kitsecrets_test_kitdockerready_99aeb9a8 -->|calls| scripts_kitsecrets_get_kitprerequisite_4cc6ac06
+    scripts_kitsecrets_get_kitgitcredentialhelperpat_74bb6913 -->|calls| scripts_kitsecrets_get_kitprerequisite_4cc6ac06
+    class scripts_kitsecrets_test_kitcommand_9ecd2313 entry;
+    class scripts_kitsecrets_convertto_ps1singlequoted_8432f304 function;
+    class scripts_kitsecrets_get_kitgitcredentialhelperpat_74bb6913 function;
+    class scripts_kitsecrets_get_kitosinfo_f453deda function;
+    class scripts_kitsecrets_get_kitsecretsstatus_f138dac2 function;
+    class scripts_kitsecrets_test_kitinteractive_9720f05f function;
+    class scripts_kitsecrets_new_kitsecrets_8fcfeb76 function;
+    class scripts_kitsecrets_request_kitsecrets_47c2d47a function;
+    class scripts_kitsecrets_get_kitprerequisite_4cc6ac06 function;
+    class scripts_kitsecrets_get_kitwslinfo_fa9086cb function;
+    class scripts_kitsecrets_test_kitdockerready_99aeb9a8 function;
+    class scripts_kitsecrets_test_kitvirtualizationenabled_163e3a85 function;
+    class scripts_kitsecrets_3bc8b44d klass;
+    class tests_kitsecrets_tests_4f92a011 test;
+    class tests_kittemplate_tests_4d0f7537 test;
+    class tests_kittoolversions_tests_b05f7e7a test;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>KitSecrets.psm1</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>KitSecrets.psm1 node in scripts/KitSecrets.psm1.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>ConvertTo-Ps1SingleQuoted()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>New-KitSecrets()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small></td>
+  <td>ConvertTo-Ps1SingleQuoted() node in scripts/KitSecrets.psm1.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>Test-KitInteractive()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>Request-KitSecrets()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small></td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>Get-KitSecretsStatus()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>Get-KitPrerequisite()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small></td>
+  <td>Get-KitSecretsStatus() node in scripts/KitSecrets.psm1.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>New-KitSecrets()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>ConvertTo-Ps1SingleQuoted()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small></td>
+  <td><code>Request-KitSecrets()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small></td>
+  <td>New-KitSecrets() node in scripts/KitSecrets.psm1.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>Request-KitSecrets()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>New-KitSecrets()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small><br><code>Test-KitInteractive()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small></td>
+  <td>No direct outbound edge</td>
+  <td>Request-KitSecrets() node in scripts/KitSecrets.psm1.</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>Test-KitCommand()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small></td>
+  <td><span class="tag tag-cmd">Entry</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>Get-KitPrerequisite()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small><br><code>Get-KitWslInfo()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small><br><code>Test-KitDockerReady()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small></td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>8</td>
+  <td><code>Get-KitOsInfo()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>Get-KitPrerequisite()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small></td>
+  <td>Get-KitOsInfo() node in scripts/KitSecrets.psm1.</td>
+</tr>
+<tr>
+  <td>9</td>
+  <td><code>Test-KitVirtualizationEnabled()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>Get-KitPrerequisite()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small></td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>10</td>
+  <td><code>Get-KitWslInfo()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>Test-KitCommand()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small></td>
+  <td><code>Get-KitPrerequisite()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small></td>
+  <td>Get-KitWslInfo() node in scripts/KitSecrets.psm1.</td>
+</tr>
+<tr>
+  <td>11</td>
+  <td><code>Test-KitDockerReady()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>Test-KitCommand()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small></td>
+  <td><code>Get-KitPrerequisite()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small></td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>12</td>
+  <td><code>Get-KitGitCredentialHelperPath()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>Get-KitPrerequisite()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small></td>
+  <td>Turns a local path or remote repository into analysis context.</td>
+</tr>
+<tr>
+  <td>13</td>
+  <td><code>Get-KitPrerequisite()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>Get-KitGitCredentialHelperPath()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small><br><code>Get-KitOsInfo()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small><br><code>Get-KitSecretsStatus()</code><br><small style="color:var(--muted)">scripts/KitSecrets.psm1</small><br>+4 more</td>
+  <td>No direct outbound edge</td>
+  <td>Get-KitPrerequisite() node in scripts/KitSecrets.psm1.</td>
+</tr>
+<tr>
+  <td>14</td>
+  <td><code>KitSecrets.Tests.ps1</code><br><small style="color:var(--muted)">tests/KitSecrets.Tests.ps1</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>15</td>
+  <td><code>KitTemplate.Tests.ps1</code><br><small style="color:var(--muted)">tests/KitTemplate.Tests.ps1</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>16</td>
+  <td><code>KitToolVersions.Tests.ps1</code><br><small style="color:var(--muted)">tests/KitToolVersions.Tests.ps1</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>scripts/KitSecrets.psm1</code></td><td>13 nodes</td></tr>
+<tr><td><code>tests/KitSecrets.Tests.ps1</code></td><td>1 nodes</td></tr>
+<tr><td><code>tests/KitTemplate.Tests.ps1</code></td><td>1 nodes</td></tr>
+<tr><td><code>tests/KitToolVersions.Tests.ps1</code></td><td>1 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x12, calls x12. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 6. Community 1 ====== -->
+<h2 id="community-1">6. Community 1</h2>
+<p>Community 1 groups implementation around kittoolversionspsm1, scripts, get, normalize, mostly in scripts/KitToolVersions.psm1. This section covers 10 nodes and 13 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Community 1 (10 nodes, 13 edges)
+    scripts_kittoolversions_get_snapinfo_479b6e22("Get-SnapInfo()<br/><small>scripts/KitToolVersions.psm1</small>")
+    scripts_kittoolversions_normalize_versionstring_ace3ec1a("Normalize-VersionString()<br/><small>scripts/KitToolVersions.psm1</small>")
+    scripts_kittoolversions_compare_pinnedversion_35cf28c0("Compare-PinnedVersion()<br/><small>scripts/KitToolVersions.psm1</small>")
+    scripts_kittoolversions_get_snaplateststabletrac_bb5b5f91("Get-SnapLatestStableTrack()<br/><small>scripts/KitToolVersions.psm1</small>")
+    scripts_kittoolversions_get_snapstableversion_d3f34219("Get-SnapStableVersion()<br/><small>scripts/KitToolVersions.psm1</small>")
+    scripts_kittoolversions_get_githubbranchheadsha_3824ebf4("Get-GitHubBranchHeadSha()<br/><small>scripts/KitToolVersions.psm1</small>")
+    scripts_kittoolversions_get_githublatestreleaset_eb6c9234("Get-GitHubLatestReleaseTag()<br/><small>scripts/KitToolVersions.psm1</small>")
+    scripts_kittoolversions_get_gitlablatestreleaset_220fe5e3("Get-GitLabLatestReleaseTag()<br/><small>scripts/KitToolVersions.psm1</small>")
+    scripts_kittoolversions_get_pypilatestversion_163d4752("Get-PypiLatestVersion()<br/><small>scripts/KitToolVersions.psm1</small>")
+    scripts_kittoolversions_4df622a2("KitToolVersions.psm1")
+    scripts_kittoolversions_normalize_versionstring_ace3ec1a -->|calls| scripts_kittoolversions_compare_pinnedversion_35cf28c0
+    scripts_kittoolversions_normalize_versionstring_ace3ec1a -->|calls| scripts_kittoolversions_get_snaplateststabletrac_bb5b5f91
+    scripts_kittoolversions_get_snapinfo_479b6e22 -->|calls| scripts_kittoolversions_get_snaplateststabletrac_bb5b5f91
+    scripts_kittoolversions_get_snapinfo_479b6e22 -->|calls| scripts_kittoolversions_get_snapstableversion_d3f34219
+    class scripts_kittoolversions_get_snapinfo_479b6e22 api;
+    class scripts_kittoolversions_normalize_versionstring_ace3ec1a function;
+    class scripts_kittoolversions_compare_pinnedversion_35cf28c0 function;
+    class scripts_kittoolversions_get_snaplateststabletrac_bb5b5f91 function;
+    class scripts_kittoolversions_get_snapstableversion_d3f34219 function;
+    class scripts_kittoolversions_get_githubbranchheadsha_3824ebf4 function;
+    class scripts_kittoolversions_get_githublatestreleaset_eb6c9234 function;
+    class scripts_kittoolversions_get_gitlablatestreleaset_220fe5e3 function;
+    class scripts_kittoolversions_get_pypilatestversion_163d4752 function;
+    class scripts_kittoolversions_4df622a2 klass;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>KitToolVersions.psm1</code><br><small style="color:var(--muted)">scripts/KitToolVersions.psm1</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>KitToolVersions.psm1 node in scripts/KitToolVersions.psm1.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>Normalize-VersionString()</code><br><small style="color:var(--muted)">scripts/KitToolVersions.psm1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>Compare-PinnedVersion()</code><br><small style="color:var(--muted)">scripts/KitToolVersions.psm1</small><br><code>Get-SnapLatestStableTrack()</code><br><small style="color:var(--muted)">scripts/KitToolVersions.psm1</small></td>
+  <td>Normalize-VersionString() node in scripts/KitToolVersions.psm1.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>Compare-PinnedVersion()</code><br><small style="color:var(--muted)">scripts/KitToolVersions.psm1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>Normalize-VersionString()</code><br><small style="color:var(--muted)">scripts/KitToolVersions.psm1</small></td>
+  <td>No direct outbound edge</td>
+  <td>Compare-PinnedVersion() node in scripts/KitToolVersions.psm1.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>Get-GitHubLatestReleaseTag()</code><br><small style="color:var(--muted)">scripts/KitToolVersions.psm1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Turns a local path or remote repository into analysis context.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>Get-GitLabLatestReleaseTag()</code><br><small style="color:var(--muted)">scripts/KitToolVersions.psm1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Turns a local path or remote repository into analysis context.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>Get-PypiLatestVersion()</code><br><small style="color:var(--muted)">scripts/KitToolVersions.psm1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>Get-GitHubBranchHeadSha()</code><br><small style="color:var(--muted)">scripts/KitToolVersions.psm1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Turns a local path or remote repository into analysis context.</td>
+</tr>
+<tr>
+  <td>8</td>
+  <td><code>Get-SnapInfo()</code><br><small style="color:var(--muted)">scripts/KitToolVersions.psm1</small></td>
+  <td><span class="tag tag-endpoint">API</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>Get-SnapLatestStableTrack()</code><br><small style="color:var(--muted)">scripts/KitToolVersions.psm1</small><br><code>Get-SnapStableVersion()</code><br><small style="color:var(--muted)">scripts/KitToolVersions.psm1</small></td>
+  <td>Get-SnapInfo() node in scripts/KitToolVersions.psm1.</td>
+</tr>
+<tr>
+  <td>9</td>
+  <td><code>Get-SnapStableVersion()</code><br><small style="color:var(--muted)">scripts/KitToolVersions.psm1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>Get-SnapInfo()</code><br><small style="color:var(--muted)">scripts/KitToolVersions.psm1</small></td>
+  <td>No direct outbound edge</td>
+  <td>Get-SnapStableVersion() node in scripts/KitToolVersions.psm1.</td>
+</tr>
+<tr>
+  <td>10</td>
+  <td><code>Get-SnapLatestStableTrack()</code><br><small style="color:var(--muted)">scripts/KitToolVersions.psm1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>Get-SnapInfo()</code><br><small style="color:var(--muted)">scripts/KitToolVersions.psm1</small><br><code>Normalize-VersionString()</code><br><small style="color:var(--muted)">scripts/KitToolVersions.psm1</small></td>
+  <td>No direct outbound edge</td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>scripts/KitToolVersions.psm1</code></td><td>10 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x9, calls x4. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 7. Community 5 ====== -->
+<h2 id="community-5">7. Community 5</h2>
+<p>Community 5 groups implementation around scripts, agentsmd, render, templatesps1, mostly in AGENTS.md. This section covers 5 nodes and 4 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Community 5 (5 nodes, 4 edges)
+    agents_md_scripts_render_templates_ps1_2af64d61("scripts/render-templates.ps1<br/><small>AGENTS.md</small>")
+    agents_md_scripts_new_secrets_ps1_5c3de175("scripts/new-secrets.ps1<br/><small>AGENTS.md</small>")
+    agents_md_scripts_preflight_ps1_731260a6("scripts/preflight.ps1<br/><small>AGENTS.md</small>")
+    agents_md_scripts_kit_secrets_psm1_7a9a33b4("scripts/KitSecrets.psm1<br/><small>AGENTS.md</small>")
+    agents_md_scripts_kit_template_psm1_72ca9f85("scripts/KitTemplate.psm1<br/><small>AGENTS.md</small>")
+    agents_md_scripts_render_templates_ps1_2af64d61 -->|calls| agents_md_scripts_kit_secrets_psm1_7a9a33b4
+    agents_md_scripts_render_templates_ps1_2af64d61 -->|calls| agents_md_scripts_kit_template_psm1_72ca9f85
+    agents_md_scripts_preflight_ps1_731260a6 -->|calls| agents_md_scripts_kit_secrets_psm1_7a9a33b4
+    agents_md_scripts_new_secrets_ps1_5c3de175 -->|calls| agents_md_scripts_kit_secrets_psm1_7a9a33b4
+    class agents_md_scripts_render_templates_ps1_2af64d61 function;
+    class agents_md_scripts_new_secrets_ps1_5c3de175 function;
+    class agents_md_scripts_preflight_ps1_731260a6 function;
+    class agents_md_scripts_kit_secrets_psm1_7a9a33b4 function;
+    class agents_md_scripts_kit_template_psm1_72ca9f85 function;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>scripts/render-templates.ps1</code><br><small style="color:var(--muted)">AGENTS.md</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>scripts/KitSecrets.psm1</code><br><small style="color:var(--muted)">AGENTS.md</small><br><code>scripts/KitTemplate.psm1</code><br><small style="color:var(--muted)">AGENTS.md</small></td>
+  <td>scripts/render-templates.ps1 node in AGENTS.md.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>scripts/preflight.ps1</code><br><small style="color:var(--muted)">AGENTS.md</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>scripts/KitSecrets.psm1</code><br><small style="color:var(--muted)">AGENTS.md</small></td>
+  <td>scripts/preflight.ps1 node in AGENTS.md.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>scripts/new-secrets.ps1</code><br><small style="color:var(--muted)">AGENTS.md</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>scripts/KitSecrets.psm1</code><br><small style="color:var(--muted)">AGENTS.md</small></td>
+  <td>scripts/new-secrets.ps1 node in AGENTS.md.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>scripts/KitTemplate.psm1</code><br><small style="color:var(--muted)">AGENTS.md</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>scripts/render-templates.ps1</code><br><small style="color:var(--muted)">AGENTS.md</small></td>
+  <td>No direct outbound edge</td>
+  <td>scripts/KitTemplate.psm1 node in AGENTS.md.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>scripts/KitSecrets.psm1</code><br><small style="color:var(--muted)">AGENTS.md</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>scripts/new-secrets.ps1</code><br><small style="color:var(--muted)">AGENTS.md</small><br><code>scripts/preflight.ps1</code><br><small style="color:var(--muted)">AGENTS.md</small><br><code>scripts/render-templates.ps1</code><br><small style="color:var(--muted)">AGENTS.md</small></td>
+  <td>No direct outbound edge</td>
+  <td>scripts/KitSecrets.psm1 node in AGENTS.md.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>AGENTS.md</code></td><td>5 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: calls x4. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 8. Community 8 ====== -->
+<h2 id="community-8">8. Community 8</h2>
+<p>Community 8 groups implementation around scripts, readmemd, new, secretsps1, mostly in README.md. This section covers 3 nodes and 2 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Community 8 (3 nodes, 2 edges)
+    readme_md_scripts_new_secrets_ps1_bd284600("scripts/new-secrets.ps1<br/><small>README.md</small>")
+    readme_md_scripts_install_ps1_d76c5f3f("scripts/install.ps1<br/><small>README.md</small>")
+    readme_md_scripts_preflight_ps1_85289c32("scripts/preflight.ps1<br/><small>README.md</small>")
+    readme_md_scripts_new_secrets_ps1_bd284600 -->|calls| readme_md_scripts_install_ps1_d76c5f3f
+    readme_md_scripts_install_ps1_d76c5f3f -->|calls| readme_md_scripts_preflight_ps1_85289c32
+    class readme_md_scripts_new_secrets_ps1_bd284600 function;
+    class readme_md_scripts_install_ps1_d76c5f3f function;
+    class readme_md_scripts_preflight_ps1_85289c32 function;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>scripts/new-secrets.ps1</code><br><small style="color:var(--muted)">README.md</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>scripts/install.ps1</code><br><small style="color:var(--muted)">README.md</small></td>
+  <td>scripts/new-secrets.ps1 node in README.md.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>scripts/install.ps1</code><br><small style="color:var(--muted)">README.md</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>scripts/new-secrets.ps1</code><br><small style="color:var(--muted)">README.md</small></td>
+  <td><code>scripts/preflight.ps1</code><br><small style="color:var(--muted)">README.md</small></td>
+  <td>scripts/install.ps1 node in README.md.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>scripts/preflight.ps1</code><br><small style="color:var(--muted)">README.md</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>scripts/install.ps1</code><br><small style="color:var(--muted)">README.md</small></td>
+  <td>No direct outbound edge</td>
+  <td>scripts/preflight.ps1 node in README.md.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>README.md</code></td><td>3 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: calls x2. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 9. Community 13 ====== -->
+<h2 id="community-13">9. Community 13</h2>
+<p>Community 13 groups implementation around scripts, instructionsmd, installps1, update, mostly in INSTRUCTIONS.md. This section covers 2 nodes and 1 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Community 13 (2 nodes, 1 edges)
+    instructions_md_scripts_install_ps1_826b6bf8("scripts/install.ps1<br/><small>INSTRUCTIONS.md</small>")
+    instructions_md_scripts_update_tools_ps1_0628a1e1("scripts/update-tools.ps1<br/><small>INSTRUCTIONS.md</small>")
+    class instructions_md_scripts_install_ps1_826b6bf8 function;
+    class instructions_md_scripts_update_tools_ps1_0628a1e1 function;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>scripts/install.ps1</code><br><small style="color:var(--muted)">INSTRUCTIONS.md</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>scripts/update-tools.ps1</code><br><small style="color:var(--muted)">INSTRUCTIONS.md</small></td>
+  <td>scripts/install.ps1 node in INSTRUCTIONS.md.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>scripts/update-tools.ps1</code><br><small style="color:var(--muted)">INSTRUCTIONS.md</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>scripts/install.ps1</code><br><small style="color:var(--muted)">INSTRUCTIONS.md</small></td>
+  <td>No direct outbound edge</td>
+  <td>scripts/update-tools.ps1 node in INSTRUCTIONS.md.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>INSTRUCTIONS.md</code></td><td>2 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: No high-confidence call edges detected. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 10. Community 14 ====== -->
+<h2 id="community-14">10. Community 14</h2>
+<p>Community 14 groups implementation around scripts, readmemd, update, toolsps1, mostly in README.md. This section covers 2 nodes and 1 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Community 14 (2 nodes, 1 edges)
+    readme_md_scripts_check_tool_updates_ps1_e1f2417e("scripts/check-tool-updates.ps1<br/><small>README.md</small>")
+    readme_md_scripts_update_tools_ps1_b64fccdd("scripts/update-tools.ps1<br/><small>README.md</small>")
+    class readme_md_scripts_check_tool_updates_ps1_e1f2417e function;
+    class readme_md_scripts_update_tools_ps1_b64fccdd function;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>scripts/update-tools.ps1</code><br><small style="color:var(--muted)">README.md</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>scripts/check-tool-updates.ps1</code><br><small style="color:var(--muted)">README.md</small></td>
+  <td>scripts/update-tools.ps1 node in README.md.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>scripts/check-tool-updates.ps1</code><br><small style="color:var(--muted)">README.md</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>scripts/update-tools.ps1</code><br><small style="color:var(--muted)">README.md</small></td>
+  <td>No direct outbound edge</td>
+  <td>scripts/check-tool-updates.ps1 node in README.md.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>README.md</code></td><td>2 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: No high-confidence call edges detected. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 11. Community 15 ====== -->
+<h2 id="community-15">11. Community 15</h2>
+<p>Community 15 groups implementation around kittemplatepsm1, scripts, expand, kittemplate, mostly in scripts/KitTemplate.psm1. This section covers 2 nodes and 1 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Community 15 (2 nodes, 1 edges)
+    scripts_kittemplate_673e6a5f("KitTemplate.psm1")
+    scripts_kittemplate_expand_kittemplate_eefe123e("Expand-KitTemplate()<br/><small>scripts/KitTemplate.psm1</small>")
+    scripts_kittemplate_673e6a5f -->|contains| scripts_kittemplate_expand_kittemplate_eefe123e
+    class scripts_kittemplate_673e6a5f klass;
+    class scripts_kittemplate_expand_kittemplate_eefe123e function;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>KitTemplate.psm1</code><br><small style="color:var(--muted)">scripts/KitTemplate.psm1</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>KitTemplate.psm1 node in scripts/KitTemplate.psm1.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>Expand-KitTemplate()</code><br><small style="color:var(--muted)">scripts/KitTemplate.psm1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Expand-KitTemplate() node in scripts/KitTemplate.psm1.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>scripts/KitTemplate.psm1</code></td><td>2 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x1. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 12. Community 16 ====== -->
+<h2 id="community-16">12. Community 16</h2>
+<p>Community 16 groups implementation around cloud, deploy, initps1, scripts, mostly in scripts/deploy-cloud-init.ps1, docs/troubleshooting.md. This section covers 2 nodes and 1 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Community 16 (2 nodes, 1 edges)
+    troubleshooting_cloud_init_168ea68a("cloud-init<br/><small>docs/troubleshooting.md</small>")
+    troubleshooting_deploy_cloud_init_673a0ad1("deploy-cloud-init.ps1")
+    troubleshooting_deploy_cloud_init_673a0ad1 -->|calls| troubleshooting_cloud_init_168ea68a
+    class troubleshooting_cloud_init_168ea68a function;
+    class troubleshooting_deploy_cloud_init_673a0ad1 function;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>deploy-cloud-init.ps1</code><br><small style="color:var(--muted)">scripts/deploy-cloud-init.ps1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>cloud-init</code><br><small style="color:var(--muted)">docs/troubleshooting.md</small></td>
+  <td>deploy-cloud-init.ps1 node in scripts/deploy-cloud-init.ps1.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>cloud-init</code><br><small style="color:var(--muted)">docs/troubleshooting.md</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>deploy-cloud-init.ps1</code><br><small style="color:var(--muted)">scripts/deploy-cloud-init.ps1</small></td>
+  <td>No direct outbound edge</td>
+  <td>cloud-init node in docs/troubleshooting.md.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>docs/troubleshooting.md</code></td><td>1 nodes</td></tr>
+<tr><td><code>scripts/deploy-cloud-init.ps1</code></td><td>1 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: calls x1. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 13. Community 17 ====== -->
+<h2 id="community-17">13. Community 17</h2>
+<p>Community 17 groups implementation around docs, troubleshootingmd, gitlabber, git, mostly in docs/troubleshooting.md. This section covers 2 nodes and 1 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Community 17 (2 nodes, 1 edges)
+    troubleshooting_git_d27885fc("Git<br/><small>docs/troubleshooting.md</small>")
+    troubleshooting_gitlabber_50010f90("gitlabber<br/><small>docs/troubleshooting.md</small>")
+    class troubleshooting_git_d27885fc klass;
+    class troubleshooting_gitlabber_50010f90 function;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>gitlabber</code><br><small style="color:var(--muted)">docs/troubleshooting.md</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Turns a local path or remote repository into analysis context.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>Git</code><br><small style="color:var(--muted)">docs/troubleshooting.md</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Turns a local path or remote repository into analysis context.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>docs/troubleshooting.md</code></td><td>2 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: No high-confidence call edges detected. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 14. Community 18 ====== -->
+<h2 id="community-18">14. Community 18</h2>
+<p>Community 18 groups implementation around agentsmd, mostly in AGENTS.md. This section covers 1 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Community 18 (1 nodes, 0 edges)
+    agents_md_1f169a2a("AGENTS.md")
+    class agents_md_1f169a2a concept;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>AGENTS.md</code><br><small style="color:var(--muted)">AGENTS.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing AGENTS.md.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>AGENTS.md</code></td><td>1 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: No high-confidence call edges detected. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 15. Community 19 ====== -->
+<h2 id="community-19">15. Community 19</h2>
+<p>Community 19 groups implementation around changelogmd, mostly in CHANGELOG.md. This section covers 1 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Community 19 (1 nodes, 0 edges)
+    change_log_md_906bb2e5("CHANGELOG.md")
+    class change_log_md_906bb2e5 concept;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>CHANGELOG.md</code><br><small style="color:var(--muted)">CHANGELOG.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing CHANGELOG.md.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>CHANGELOG.md</code></td><td>1 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: No high-confidence call edges detected. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 16. Other ====== -->
+<h2 id="other">16. Other</h2>
+<p>Other groups implementation around readmemd, scripts, changelogmd, tool, mostly in CHANGELOG.md, README.md, config/tool-versions.ps1. This section covers 9 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Other (9 nodes, 0 edges)
+    subgraph other_CHANGELOG_md_536ea415["CHANGELOG.md"]
+        change_log_md_version_1_0_0_dcff7dc3("1.0.0<br/><small>CHANGELOG.md</small>")
+        change_log_md_version_1_1_0_ba6838f4("1.1.0<br/><small>CHANGELOG.md</small>")
+    end
+    subgraph other_README_md_c5f956df["README.md"]
+        readme_md_scripts_verify_ps1_d83c0120("scripts/verify.ps1<br/><small>README.md</small>")
+        readme_md_eeb98ce0("README.md")
+    end
+    instructions_md_b535e198("INSTRUCTIONS.md")
+    config_tool_versions_257607de("tool-versions.ps1")
+    troubleshooting_dns_tunneling_1fb4ed12("DNS Tunneling<br/><small>docs/troubleshooting.md</small>")
+    scripts_deploy_wslconfig_f72df28b("deploy-wslconfig.ps1")
+    scripts_preflight_e04a310f("preflight.ps1")
+    class change_log_md_version_1_0_0_dcff7dc3 function;
+    class change_log_md_version_1_1_0_ba6838f4 function;
+    class readme_md_scripts_verify_ps1_d83c0120 function;
+    class readme_md_eeb98ce0 concept;
+    class instructions_md_b535e198 concept;
+    class config_tool_versions_257607de function;
+    class troubleshooting_dns_tunneling_1fb4ed12 klass;
+    class scripts_deploy_wslconfig_f72df28b function;
+    class scripts_preflight_e04a310f function;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>1.0.0</code><br><small style="color:var(--muted)">CHANGELOG.md</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>1.0.0 node in CHANGELOG.md.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>1.1.0</code><br><small style="color:var(--muted)">CHANGELOG.md</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>1.1.0 node in CHANGELOG.md.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>tool-versions.ps1</code><br><small style="color:var(--muted)">config/tool-versions.ps1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>tool-versions.ps1 node in config/tool-versions.ps1.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>INSTRUCTIONS.md</code><br><small style="color:var(--muted)">INSTRUCTIONS.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing INSTRUCTIONS.md.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>README.md</code><br><small style="color:var(--muted)">README.md</small></td>
+  <td><span class="tag tag-func">Concept</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Documentation node describing README.md.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>scripts/verify.ps1</code><br><small style="color:var(--muted)">README.md</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>scripts/verify.ps1 node in README.md.</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>deploy-wslconfig.ps1</code><br><small style="color:var(--muted)">scripts/deploy-wslconfig.ps1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Reads, resolves, or persists project configuration.</td>
+</tr>
+<tr>
+  <td>8</td>
+  <td><code>preflight.ps1</code><br><small style="color:var(--muted)">scripts/preflight.ps1</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>preflight.ps1 node in scripts/preflight.ps1.</td>
+</tr>
+<tr>
+  <td>9</td>
+  <td><code>DNS Tunneling</code><br><small style="color:var(--muted)">docs/troubleshooting.md</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>DNS Tunneling node in docs/troubleshooting.md.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>CHANGELOG.md</code></td><td>2 nodes</td></tr>
+<tr><td><code>README.md</code></td><td>2 nodes</td></tr>
+<tr><td><code>INSTRUCTIONS.md</code></td><td>1 nodes</td></tr>
+<tr><td><code>config/tool-versions.ps1</code></td><td>1 nodes</td></tr>
+<tr><td><code>docs/troubleshooting.md</code></td><td>1 nodes</td></tr>
+<tr><td><code>scripts/deploy-wslconfig.ps1</code></td><td>1 nodes</td></tr>
+<tr><td><code>scripts/preflight.ps1</code></td><td>1 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: No high-confidence call edges detected. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<h2 id="stats">Project Statistics</h2>
+
+<div class="grid">
+  <div class="card">
+    <h4>Graph</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><td>Nodes</td><td>95</td></tr>
+      <tr><td>Edges</td><td>86</td></tr>
+      <tr><td>Hyperedges</td><td>0</td></tr>
+      <tr><td>Communities</td><td>32</td></tr>
+      <tr><td>Documented Sections</td><td>15</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Edge Confidence</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><td>EXTRACTED</td><td>78</td></tr>
+      <tr><td>INFERRED</td><td>8</td></tr>
+      <tr><td>AMBIGUOUS</td><td>0</td></tr>
+    </table>
+  </div>
+</div>
+
+<div style="text-align:center; padding:40px 0; color: var(--muted); font-size:0.9rem;">
+  <p>wsl-devops — Architecture Documentation</p>
+  <p>Generated: 2026-06-20 06:32 UTC · graphify callflow-html</p>
+</div>
+
+</div><!-- .container -->
+
+<script>
+(function () {
+  const mermaidConfig = {
+    startOnLoad: false,
+    theme: 'dark',
+    securityLevel: 'loose',
+    flowchart: { htmlLabels: true, useMaxWidth: true },
+    themeVariables: {
+      primaryColor: '#1e293b',
+      primaryTextColor: '#e2e8f0',
+      primaryBorderColor: '#38bdf8',
+      secondaryColor: '#0f172a',
+      tertiaryColor: '#334155',
+      lineColor: '#64748b',
+      textColor: '#e2e8f0',
+    }
+  };
+
+  mermaid.initialize(mermaidConfig);
+
+  function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+  }
+
+  function enhanceMermaidDiagrams() {
+    document.querySelectorAll('.mermaid').forEach((container) => {
+      if (container.dataset.zoomReady === 'true') return;
+      const svg = container.querySelector('svg');
+      if (!svg) return;
+
+      container.dataset.zoomReady = 'true';
+      container.classList.add('is-enhanced');
+
+      const viewport = document.createElement('div');
+      viewport.className = 'mermaid-viewport';
+      svg.parentNode.insertBefore(viewport, svg);
+      viewport.appendChild(svg);
+
+      const toolbar = document.createElement('div');
+      toolbar.className = 'mermaid-toolbar';
+      toolbar.innerHTML = [
+        '<button type="button" data-action="zoom-out" title="Zoom out">-</button>',
+        '<span class="zoom-level" data-role="level">100%</span>',
+        '<button type="button" data-action="zoom-in" title="Zoom in">+</button>',
+        '<button type="button" data-action="fit" title="Fit width">Fit</button>',
+        '<button type="button" data-action="reset" title="Reset view">Reset</button>'
+      ].join('');
+      container.insertBefore(toolbar, viewport);
+
+      const state = { scale: 1, x: 0, y: 0, dragging: false, startX: 0, startY: 0, originX: 0, originY: 0 };
+      const level = toolbar.querySelector('[data-role="level"]');
+
+      function applyTransform() {
+        svg.style.transform = `translate(${state.x}px, ${state.y}px) scale(${state.scale})`;
+        level.textContent = `${Math.round(state.scale * 100)}%`;
+      }
+
+      function zoomBy(delta) {
+        state.scale = clamp(state.scale + delta, 0.25, 3);
+        applyTransform();
+      }
+
+      function reset() {
+        state.scale = 1;
+        state.x = 0;
+        state.y = 0;
+        applyTransform();
+      }
+
+      function fitWidth() {
+        const rawWidth = svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.width
+          ? svg.viewBox.baseVal.width
+          : svg.getBoundingClientRect().width / state.scale;
+        if (!rawWidth) {
+          reset();
+          return;
+        }
+        state.scale = clamp((viewport.clientWidth - 48) / rawWidth, 0.25, 1.4);
+        state.x = 0;
+        state.y = 0;
+        applyTransform();
+      }
+
+      toolbar.addEventListener('click', (event) => {
+        const button = event.target.closest('button[data-action]');
+        if (!button) return;
+        const action = button.dataset.action;
+        if (action === 'zoom-in') zoomBy(0.15);
+        if (action === 'zoom-out') zoomBy(-0.15);
+        if (action === 'fit') fitWidth();
+        if (action === 'reset') reset();
+      });
+
+      viewport.addEventListener('wheel', (event) => {
+        if (!event.ctrlKey && !event.metaKey) return;
+        event.preventDefault();
+        zoomBy(event.deltaY < 0 ? 0.1 : -0.1);
+      }, { passive: false });
+
+      viewport.addEventListener('pointerdown', (event) => {
+        if (event.button !== 0) return;
+        state.dragging = true;
+        state.startX = event.clientX;
+        state.startY = event.clientY;
+        state.originX = state.x;
+        state.originY = state.y;
+        viewport.classList.add('is-dragging');
+        viewport.setPointerCapture(event.pointerId);
+      });
+
+      viewport.addEventListener('pointermove', (event) => {
+        if (!state.dragging) return;
+        state.x = state.originX + event.clientX - state.startX;
+        state.y = state.originY + event.clientY - state.startY;
+        applyTransform();
+      });
+
+      function endDrag(event) {
+        if (!state.dragging) return;
+        state.dragging = false;
+        viewport.classList.remove('is-dragging');
+        if (viewport.hasPointerCapture(event.pointerId)) {
+          viewport.releasePointerCapture(event.pointerId);
+        }
+      }
+
+      viewport.addEventListener('pointerup', endDrag);
+      viewport.addEventListener('pointercancel', endDrag);
+      applyTransform();
+    });
+  }
+
+  function renderMermaid() {
+    const result = mermaid.run
+      ? mermaid.run({ querySelector: '.mermaid' })
+      : Promise.resolve();
+    Promise.resolve(result)
+      .then(enhanceMermaidDiagrams)
+      .catch((error) => {
+        console.error('Mermaid render failed:', error);
+        enhanceMermaidDiagrams();
+      });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', renderMermaid);
+  } else {
+    renderMermaid();
+  }
+})();
+</script>
+
+</body>
+</html>

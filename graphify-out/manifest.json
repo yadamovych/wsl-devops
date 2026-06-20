@@ -1,0 +1,157 @@
+{
+  "add-snap-path.sh": {
+    "mtime": 1781725809.8640792,
+    "ast_hash": "9b43ab9c30ff24a27ab7ed2eaa790f64",
+    "semantic_hash": "9b43ab9c30ff24a27ab7ed2eaa790f64"
+  },
+  "config/kit.config.ps1": {
+    "mtime": 1781773602.7235136,
+    "ast_hash": "8c60791931d187473fccffc939785a67",
+    "semantic_hash": "8c60791931d187473fccffc939785a67"
+  },
+  "config/tool-versions.ps1": {
+    "mtime": 1781780744.7530897,
+    "ast_hash": "e404c2f9dcff971c660ba30090a07330",
+    "semantic_hash": "e404c2f9dcff971c660ba30090a07330"
+  },
+  "scripts/KitSecrets.psm1": {
+    "mtime": 1781772069.5737119,
+    "ast_hash": "5a8272ffc24005b4310e24a82ec6b908",
+    "semantic_hash": "5a8272ffc24005b4310e24a82ec6b908"
+  },
+  "scripts/KitTemplate.psm1": {
+    "mtime": 1781765707.5917487,
+    "ast_hash": "2c7cad07cdc13149f0676842ae1e7984",
+    "semantic_hash": "2c7cad07cdc13149f0676842ae1e7984"
+  },
+  "scripts/KitToolVersions.psm1": {
+    "mtime": 1781780247.8352222,
+    "ast_hash": "f33624cbdfafec4c05e6286cfbac6a41",
+    "semantic_hash": "f33624cbdfafec4c05e6286cfbac6a41"
+  },
+  "scripts/check-tool-updates.ps1": {
+    "mtime": 1781780761.9287865,
+    "ast_hash": "ded8652156934223232a6bc3fa9f281a",
+    "semantic_hash": "ded8652156934223232a6bc3fa9f281a"
+  },
+  "scripts/deploy-cloud-init.ps1": {
+    "mtime": 1781725809.8751245,
+    "ast_hash": "ee56d9b6de33f572746bb0eb00de4d3f",
+    "semantic_hash": "ee56d9b6de33f572746bb0eb00de4d3f"
+  },
+  "scripts/deploy-wslconfig.ps1": {
+    "mtime": 1781725809.8751245,
+    "ast_hash": "1a8feac8f4189a856a55e926de69bc7a",
+    "semantic_hash": "1a8feac8f4189a856a55e926de69bc7a"
+  },
+  "scripts/install-oh-my-zsh.sh": {
+    "mtime": 1781844209.7681816,
+    "ast_hash": "435c01ff29968f18a1e1a3030b0dc705",
+    "semantic_hash": "435c01ff29968f18a1e1a3030b0dc705"
+  },
+  "scripts/install-wsl-browser.sh": {
+    "mtime": 1781844209.7681816,
+    "ast_hash": "40d5bba0b35d90423e3aae28bb886a16",
+    "semantic_hash": "40d5bba0b35d90423e3aae28bb886a16"
+  },
+  "scripts/install-wsl-editors.sh": {
+    "mtime": 1781780487.6207933,
+    "ast_hash": "7abe463eda6ff0b4bf3e55a55ac9ecf8",
+    "semantic_hash": "7abe463eda6ff0b4bf3e55a55ac9ecf8"
+  },
+  "scripts/install.ps1": {
+    "mtime": 1781767411.587701,
+    "ast_hash": "68702f9d0a4f0d3547f694f95d6147a0",
+    "semantic_hash": "68702f9d0a4f0d3547f694f95d6147a0"
+  },
+  "scripts/preflight.ps1": {
+    "mtime": 1781765707.5917487,
+    "ast_hash": "44309ba01b994b86091f4a495716a7ba",
+    "semantic_hash": "44309ba01b994b86091f4a495716a7ba"
+  },
+  "scripts/render-templates.ps1": {
+    "mtime": 1781844209.7681816,
+    "ast_hash": "2bc7207bc2ebfffc24f6c0211744bf2b",
+    "semantic_hash": "2bc7207bc2ebfffc24f6c0211744bf2b"
+  },
+  "scripts/uninstall.ps1": {
+    "mtime": 1781725809.8761263,
+    "ast_hash": "64473baccd674df5e84f8f6dfcfbf200",
+    "semantic_hash": "64473baccd674df5e84f8f6dfcfbf200"
+  },
+  "scripts/update-tools.ps1": {
+    "mtime": 1781780639.7395656,
+    "ast_hash": "6ae7cdb0b04f84db5f12206aae295c10",
+    "semantic_hash": "6ae7cdb0b04f84db5f12206aae295c10"
+  },
+  "scripts/update-tools.sh": {
+    "mtime": 1781844209.7681816,
+    "ast_hash": "ba5dc30f3cc6cb1fc189d16dc24d285f",
+    "semantic_hash": "ba5dc30f3cc6cb1fc189d16dc24d285f"
+  },
+  "scripts/verify.ps1": {
+    "mtime": 1781780765.9101558,
+    "ast_hash": "6af7fe35110ada775a71e6326beef1d4",
+    "semantic_hash": "6af7fe35110ada775a71e6326beef1d4"
+  },
+  "tests/KitSecrets.Tests.ps1": {
+    "mtime": 1781771979.075046,
+    "ast_hash": "69eca84041aea707287916ffc7966abc",
+    "semantic_hash": "69eca84041aea707287916ffc7966abc"
+  },
+  "tests/KitTemplate.Tests.ps1": {
+    "mtime": 1781782477.0746093,
+    "ast_hash": "b60e74a86f45fd8a1ebc8f0684ab7000",
+    "semantic_hash": "b60e74a86f45fd8a1ebc8f0684ab7000"
+  },
+  "tests/KitToolVersions.Tests.ps1": {
+    "mtime": 1781769955.9597201,
+    "ast_hash": "a04c305790663e1edb976379b97f1945",
+    "semantic_hash": "a04c305790663e1edb976379b97f1945"
+  },
+  "scripts/rebuild-graph.ps1": {
+    "mtime": 1781937303.0742736,
+    "ast_hash": "8abce2993d964f66f51f365c7a2ff12c",
+    "semantic_hash": "8abce2993d964f66f51f365c7a2ff12c"
+  },
+  "AGENTS.md": {
+    "mtime": 1781772029.2267265,
+    "ast_hash": "f47d5c02d0f7dfcd91ed60243eeee7ac",
+    "semantic_hash": "f47d5c02d0f7dfcd91ed60243eeee7ac"
+  },
+  "INSTRUCTIONS.md": {
+    "mtime": 1781774296.4188664,
+    "ast_hash": "2c1cbd0fd996887df26261249e3c7541",
+    "semantic_hash": "2c1cbd0fd996887df26261249e3c7541"
+  },
+  "README.md": {
+    "mtime": 1781774286.7441041,
+    "ast_hash": "76d9bd6c4acfd19772bacd96e58eeae4",
+    "semantic_hash": "76d9bd6c4acfd19772bacd96e58eeae4"
+  },
+  "checklists/fresh-install.md": {
+    "mtime": 1781771981.9371765,
+    "ast_hash": "1b3e961095b0ce8d38198b81aa39e005",
+    "semantic_hash": "1b3e961095b0ce8d38198b81aa39e005"
+  },
+  "checklists/repeat-install.md": {
+    "mtime": 1781776735.9170291,
+    "ast_hash": "887d5f9f1781a24e7f3e5d74808b86f1",
+    "semantic_hash": "887d5f9f1781a24e7f3e5d74808b86f1"
+  },
+  "docs/manual-steps.md": {
+    "mtime": 1781844209.7681816,
+    "ast_hash": "074b8196fcbb81cd5c3c637372e950e8",
+    "semantic_hash": "074b8196fcbb81cd5c3c637372e950e8"
+  },
+  "docs/prerequisites.md": {
+    "mtime": 1781774288.7062943,
+    "ast_hash": "18256130bc98750c01d71e360362bc9b",
+    "semantic_hash": "18256130bc98750c01d71e360362bc9b"
+  },
+  "docs/troubleshooting.md": {
+    "mtime": 1781774294.6624842,
+    "ast_hash": "b2097f8076d95b4096d40cf54c8df597",
+    "semantic_hash": "b2097f8076d95b4096d40cf54c8df597"
+  }
+}

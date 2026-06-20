@@ -10,3 +10,7 @@ config/rendered/
 Thumbs.db
 *.swp
 install-run.log
+
+# Graphify (generated knowledge graph — commit graphify-out/ except local-only files)
+graphify-out/cost.json
+graphify-out/cache/

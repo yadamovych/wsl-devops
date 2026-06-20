@@ -1,0 +1,313 @@
+{
+  "communities": {
+    "0": [
+      "checklists_fresh_install",
+      "checklists_repeat_install",
+      "docker_desktop",
+      "docs_manual_steps",
+      "docs_prerequisites",
+      "git_for_windows",
+      "scripts_check_tool_updates",
+      "scripts_install",
+      "scripts_uninstall",
+      "scripts_update_tools",
+      "scripts_verify",
+      "vs_code",
+      "windows_terminal"
+    ],
+    "1": [
+      "scripts_kitsecrets",
+      "scripts_kitsecrets_convertto_ps1singlequoted",
+      "scripts_kitsecrets_get_kitgitcredentialhelperpath",
+      "scripts_kitsecrets_get_kitosinfo",
+      "scripts_kitsecrets_get_kitprerequisite",
+      "scripts_kitsecrets_get_kitsecretsstatus",
+      "scripts_kitsecrets_get_kitwslinfo",
+      "scripts_kitsecrets_new_kitsecrets",
+      "scripts_kitsecrets_request_kitsecrets",
+      "scripts_kitsecrets_test_kitcommand",
+      "scripts_kitsecrets_test_kitdockerready",
+      "scripts_kitsecrets_test_kitinteractive",
+      "scripts_kitsecrets_test_kitvirtualizationenabled"
+    ],
+    "2": [
+      "scripts_kittoolversions",
+      "scripts_kittoolversions_compare_pinnedversion",
+      "scripts_kittoolversions_get_githubbranchheadsha",
+      "scripts_kittoolversions_get_githublatestreleasetag",
+      "scripts_kittoolversions_get_gitlablatestreleasetag",
+      "scripts_kittoolversions_get_pypilatestversion",
+      "scripts_kittoolversions_get_snapinfo",
+      "scripts_kittoolversions_get_snaplateststabletrack",
+      "scripts_kittoolversions_get_snapstableversion",
+      "scripts_kittoolversions_normalize_versionstring"
+    ],
+    "3": [
+      "troubleshooting_check_tool_updates",
+      "troubleshooting_docker",
+      "troubleshooting_install",
+      "troubleshooting_kit_config",
+      "troubleshooting_systemd",
+      "troubleshooting_uninstall",
+      "troubleshooting_wsl",
+      "troubleshooting_wsl_config"
+    ],
+    "4": [
+      "c_users_yadam_projects_wsl_devops_scripts_install_oh_my_zsh_sh__entry",
+      "scripts_install_oh_my_zsh",
+      "scripts_install_oh_my_zsh_install_kit_zsh_custom",
+      "scripts_install_oh_my_zsh_install_oh_my_zsh",
+      "scripts_install_oh_my_zsh_kit_zsh_custom_src",
+      "scripts_install_oh_my_zsh_write_kit_zshrc"
+    ],
+    "5": [
+      "agents_md_scripts_kit_secrets_psm1",
+      "agents_md_scripts_kit_template_psm1",
+      "agents_md_scripts_new_secrets_ps1",
+      "agents_md_scripts_preflight_ps1",
+      "agents_md_scripts_render_templates_ps1"
+    ],
+    "6": [
+      "c_users_yadam_projects_wsl_devops_scripts_update_tools_sh__entry",
+      "scripts_update_tools_debian_frontend",
+      "scripts_update_tools_path",
+      "scripts_update_tools_sh_scripts_update_tools"
+    ],
+    "7": [
+      "readme_md_scripts_install_ps1",
+      "readme_md_scripts_new_secrets_ps1",
+      "readme_md_scripts_preflight_ps1"
+    ],
+    "8": [
+      "scripts_rebuild_graph",
+      "scripts_rebuild_graph_get_graphifyexe",
+      "scripts_rebuild_graph_invoke_graphify"
+    ],
+    "9": [
+      "troubleshooting_render_templates",
+      "troubleshooting_update_tools",
+      "troubleshooting_verify"
+    ],
+    "10": [
+      "add_snap_path",
+      "c_users_yadam_projects_wsl_devops_add_snap_path_sh__entry"
+    ],
+    "11": [
+      "c_users_yadam_projects_wsl_devops_scripts_install_wsl_browser_sh__entry",
+      "scripts_install_wsl_browser"
+    ],
+    "12": [
+      "c_users_yadam_projects_wsl_devops_scripts_install_wsl_editors_sh__entry",
+      "scripts_install_wsl_editors"
+    ],
+    "13": [
+      "instructions_md_scripts_install_ps1",
+      "instructions_md_scripts_update_tools_ps1"
+    ],
+    "14": [
+      "readme_md_scripts_check_tool_updates_ps1",
+      "readme_md_scripts_update_tools_ps1"
+    ],
+    "15": [
+      "scripts_kittemplate",
+      "scripts_kittemplate_expand_kittemplate"
+    ],
+    "16": [
+      "troubleshooting_cloud_init",
+      "troubleshooting_deploy_cloud_init"
+    ],
+    "17": [
+      "troubleshooting_git",
+      "troubleshooting_gitlabber"
+    ],
+    "18": [
+      "agents_md"
+    ],
+    "19": [
+      "change_log_md"
+    ],
+    "20": [
+      "change_log_md_version_1_0_0"
+    ],
+    "21": [
+      "change_log_md_version_1_1_0"
+    ],
+    "22": [
+      "config_tool_versions"
+    ],
+    "23": [
+      "instructions_md"
+    ],
+    "24": [
+      "readme_md"
+    ],
+    "25": [
+      "readme_md_scripts_verify_ps1"
+    ],
+    "26": [
+      "scripts_deploy_wslconfig"
+    ],
+    "27": [
+      "scripts_preflight"
+    ],
+    "28": [
+      "tests_kitsecrets_tests"
+    ],
+    "29": [
+      "tests_kittemplate_tests"
+    ],
+    "30": [
+      "tests_kittoolversions_tests"
+    ],
+    "31": [
+      "troubleshooting_dns_tunneling"
+    ]
+  },
+  "cohesion": {
+    "0": 0.1794871794871795,
+    "1": 0.3076923076923077,
+    "2": 0.28888888888888886,
+    "3": 0.25,
+    "4": 0.6,
+    "5": 0.4,
+    "6": 0.5,
+    "7": 0.6666666666666666,
+    "8": 1.0,
+    "9": 0.6666666666666666,
+    "10": 1.0,
+    "11": 1.0,
+    "12": 1.0,
+    "13": 1.0,
+    "14": 1.0,
+    "15": 1.0,
+    "16": 1.0,
+    "17": 1.0,
+    "18": 1.0,
+    "19": 1.0,
+    "20": 1.0,
+    "21": 1.0,
+    "22": 1.0,
+    "23": 1.0,
+    "24": 1.0,
+    "25": 1.0,
+    "26": 1.0,
+    "27": 1.0,
+    "28": 1.0,
+    "29": 1.0,
+    "30": 1.0,
+    "31": 1.0
+  },
+  "gods": [
+    {
+      "id": "scripts_kitsecrets_get_kitprerequisite",
+      "label": "Get-KitPrerequisite()",
+      "degree": 8
+    },
+    {
+      "id": "troubleshooting_wsl",
+      "label": "WSL",
+      "degree": 7
+    },
+    {
+      "id": "checklists_repeat_install",
+      "label": "Repeat Install Checklist",
+      "degree": 5
+    },
+    {
+      "id": "scripts_kitsecrets_test_kitcommand",
+      "label": "Test-KitCommand()",
+      "degree": 4
+    },
+    {
+      "id": "c_users_yadam_projects_wsl_devops_scripts_install_oh_my_zsh_sh__entry",
+      "label": "install-oh-my-zsh.sh script",
+      "degree": 4
+    },
+    {
+      "id": "scripts_install",
+      "label": "Install Script",
+      "degree": 4
+    },
+    {
+      "id": "docs_manual_steps",
+      "label": "Manual Post-Provision Steps",
+      "degree": 4
+    },
+    {
+      "id": "scripts_kitsecrets_new_kitsecrets",
+      "label": "New-KitSecrets()",
+      "degree": 3
+    },
+    {
+      "id": "scripts_kitsecrets_request_kitsecrets",
+      "label": "Request-KitSecrets()",
+      "degree": 3
+    },
+    {
+      "id": "scripts_kitsecrets_get_kitwslinfo",
+      "label": "Get-KitWslInfo()",
+      "degree": 3
+    }
+  ],
+  "surprises": [
+    {
+      "source": "Repeat Install Checklist",
+      "target": "Uninstall Script",
+      "source_files": [
+        "checklists/repeat-install.md",
+        "scripts/uninstall.ps1"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "crosses file types (code \u2194 doc); connects across different repos/directories; peripheral node `Uninstall Script` unexpectedly reaches hub `Repeat Install Checklist`"
+    },
+    {
+      "source": "Repeat Install Checklist",
+      "target": "Verify Script",
+      "source_files": [
+        "checklists/repeat-install.md",
+        "scripts/verify.ps1"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "crosses file types (code \u2194 doc); connects across different repos/directories; peripheral node `Verify Script` unexpectedly reaches hub `Repeat Install Checklist`"
+    },
+    {
+      "source": "Repeat Install Checklist",
+      "target": "Update Tools Script",
+      "source_files": [
+        "checklists/repeat-install.md",
+        "scripts/update-tools.ps1"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "crosses file types (code \u2194 doc); connects across different repos/directories; peripheral node `Update Tools Script` unexpectedly reaches hub `Repeat Install Checklist`"
+    },
+    {
+      "source": "Repeat Install Checklist",
+      "target": "Check Tool Updates Script",
+      "source_files": [
+        "checklists/repeat-install.md",
+        "scripts/check-tool-updates.ps1"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "crosses file types (code \u2194 doc); connects across different repos/directories; peripheral node `Check Tool Updates Script` unexpectedly reaches hub `Repeat Install Checklist`"
+    },
+    {
+      "source": "Fresh Install Checklist",
+      "target": "Install Script",
+      "source_files": [
+        "checklists/fresh-install.md",
+        "scripts/install.ps1"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "crosses file types (code \u2194 doc); connects across different repos/directories"
+    }
+  ],
+  "tokens": {
+    "input": 0,
+    "output": 0
+  }
+}

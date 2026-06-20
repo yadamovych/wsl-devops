@@ -1,0 +1,12 @@
+{
+  "groq": {
+    "base_url": "https://api.groq.com/openai/v1",
+    "default_model": "llama-3.3-70b-versatile",
+    "env_key": "GROQ_API_KEY",
+    "pricing": {
+      "input": 0.0,
+      "output": 0.0
+    },
+    "temperature": 0
+  }
+}

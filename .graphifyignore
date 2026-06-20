@@ -1,0 +1,11 @@
+# Generated / local outputs
+.cloud-init-rendered/
+config/rendered/
+graphify-out/
+
+# Secrets
+config/secrets.local.ps1
+
+# Low-value for architecture graph; skip LLM semantic extraction to save tokens
+CHANGELOG.md
+VERSION
